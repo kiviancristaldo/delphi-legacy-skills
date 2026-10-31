@@ -1,5 +1,7 @@
 # Delphi Legacy Skills
 
+[![skills.sh](https://skills.sh/b/kiviancristaldo/delphi-legacy-skills)](https://skills.sh/kiviancristaldo/delphi-legacy-skills)
+
 **Skills de IA para diagnosticar, testar, limpar, refatorar e modernizar sistemas Delphi legados.**
 
 Funcionam no Claude Code, no Claude.ai e em outros agentes compatíveis com o padrão aberto
@@ -109,11 +111,12 @@ O `Invoke-ReFind.ps1` corrige os dois numa cópia das regras, sem alterar os arq
 ## Documentação
 - [Como funciona uma skill](docs/como-funciona-uma-skill.md): estrutura, carregamento em 3 níveis, frontmatter.
 - [Adaptando as skills ao seu projeto](docs/adaptando-ao-seu-projeto.md).
+- [Roteiro de testes](docs/roteiro-de-testes.md): como validar cada skill antes de usar.
 - [Contribuindo](CONTRIBUTING.md) · [Histórico de versões](CHANGELOG.md).
 
 ## Status
 Versão inicial (0.1). Os scripts foram revisados, mas ainda não rodaram em muitos projetos
-reais. Use primeiro numa cópia ou branch, e abra uma *issue* com a saída do console se algo
+reais. Depois de clonar, rode `tools\Testar-Sintaxe.ps1` para conferir a sintaxe de todos. Use primeiro numa cópia ou branch, e abra uma *issue* com a saída do console se algo
 não funcionar.
 
 ## Créditos

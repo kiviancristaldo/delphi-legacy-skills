@@ -1,5 +1,10 @@
 # Histórico de versões
 
+## Não lançado
+- Badge do skills.sh no README.
+- `docs/roteiro-de-testes.md`: roteiro de testes por skill, com ideias de vídeo.
+- `tools/Testar-Sintaxe.ps1`: confere a sintaxe e o BOM de todos os scripts.
+
 ## 0.1.0 (novembro de 2026)
 Versão inicial, apresentada no Dia do ACBr 2026.
 
