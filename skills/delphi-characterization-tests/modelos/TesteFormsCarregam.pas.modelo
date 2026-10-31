@@ -1,0 +1,58 @@
+﻿unit Test.FormsCarregam;
+
+{ Smoke test: cria e libera cada form e DataModule do projeto.
+  Pega erros de DFM que o compilador não vê, como:
+    "Error reading FDConnection1.VendorLib: Property VendorLib does not exist"
+    "Class TSQLQuery not found"
+  Gere um teste por form/DataModule listado no .dpr (seção uses e Application.CreateForm).
+  Se o OnCreate conectar no banco, garanta um banco de teste acessível ou
+  desligue a conexão (Connected = False no DFM é o padrão recomendado). }
+
+interface
+
+uses
+  DUnitX.TestFramework;
+
+type
+  [TestFixture]
+  TTestFormsCarregam = class
+  public
+    [Test] procedure {{DataModule1}}_Carrega;
+    [Test] procedure {{Form1}}_Carrega;
+    // ... um teste por form/DataModule
+  end;
+
+implementation
+
+uses
+  System.Classes, System.SysUtils, Vcl.Forms
+  {{, UnitsDosForms}};
+
+procedure TTestFormsCarregam.{{DataModule1}}_Carrega;
+begin
+  Assert.WillNotRaise(
+    procedure
+    var
+      DM: TDataModule;
+    begin
+      DM := T{{DataModule1}}.Create(nil);
+      DM.Free;
+    end);
+end;
+
+procedure TTestFormsCarregam.{{Form1}}_Carrega;
+begin
+  Assert.WillNotRaise(
+    procedure
+    var
+      F: TForm;
+    begin
+      F := T{{Form1}}.Create(nil);
+      F.Free;
+    end);
+end;
+
+initialization
+  TDUnitX.RegisterTestFixture(TTestFormsCarregam);
+
+end.

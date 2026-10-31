@@ -1,0 +1,48 @@
+; =====================================================================
+; Regras do PROJETO para o reFind (dbExpress -> FireDAC)
+; São aplicadas ANTES das regras oficiais da Embarcadero.
+; Linhas com ; são comentário. Ajuste ao banco do projeto.
+;
+; Sintaxe:
+;   #unuse <unit>                              remove do uses
+;   #remove <propriedade>                      remove do PAS e DFM
+;   #migrate [<Classe>:] <antigo> -> <novo> [, <unit>...]
+;   <regex PCRE> -> <substituição>
+; =====================================================================
+
+; ---------------------------------------------------------------------
+; 1. VendorLib não existe no TFDConnection (no FireDAC fica no DriverLink).
+;    Seguro num projeto que ainda não usa FireDAC: o #remove vale para
+;    qualquer componente com essa propriedade.
+; ---------------------------------------------------------------------
+#remove VendorLib
+#remove LoadParamsOnConnect
+
+; ---------------------------------------------------------------------
+; 2. DriverName: o TFDConnection tem a propriedade, mas com outros valores.
+;    Mantenha só a linha do banco do projeto.
+; ---------------------------------------------------------------------
+\bDriverName( *[:]*= *)'Firebird' -> DriverName\1'FB'
+;\bDriverName( *[:]*= *)'Interbase' -> DriverName\1'IB'
+;\bDriverName( *[:]*= *)'Oracle' -> DriverName\1'Ora'
+;\bDriverName( *[:]*= *)'Sqlite' -> DriverName\1'SQLite'
+
+; ---------------------------------------------------------------------
+; 3. Params da conexão (linhas de Params.Strings no DFM)
+; ---------------------------------------------------------------------
+'DriverName=Firebird' -> 'DriverID=FB'
+'ServerCharSet= -> 'CharacterSet=
+'HostName= -> 'Server=
+
+; ---------------------------------------------------------------------
+; 4. Classes próprias herdadas de TSQLQuery/TSQLDataSet
+;    As regras oficiais restritas a classe não valem para filhas.
+; ---------------------------------------------------------------------
+;#migrate TMinhaSQLQuery:SQLConnection -> Connection
+;#migrate TMinhaSQLQuery:DataSource -> MasterSource
+;#migrate TMinhaSQLQuery:ParamCheck -> ResourceOptions.ParamCreate
+
+; ---------------------------------------------------------------------
+; 5. Units do projeto que só existiam por causa do DBX
+; ---------------------------------------------------------------------
+;#unuse uConexaoDBX

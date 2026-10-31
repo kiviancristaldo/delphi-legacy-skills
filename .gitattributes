@@ -1,0 +1,9 @@
+# Arquivos Windows mantêm CRLF; o resto, LF
+*.ps1   text eol=crlf
+*.pas   text eol=crlf
+*.dpr   text eol=crlf
+*.modelo text eol=crlf
+*.txt   text eol=crlf
+*.md    text eol=lf
+*.yml   text eol=lf
+*.py    text eol=lf

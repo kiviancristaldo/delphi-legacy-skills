@@ -1,0 +1,80 @@
+﻿unit Test.{{UnitAlvo}};
+
+{ Testes de caracterização de {{UnitAlvo}}.
+  Registram o comportamento ATUAL (de {{Data}}), não o comportamento "correto".
+  Casos marcados com COMPORTAMENTO SUSPEITO precisam de decisão do time. }
+
+interface
+
+uses
+  DUnitX.TestFramework;
+
+type
+  [TestFixture]
+  TTest{{Alvo}} = class
+  public
+    [Setup]
+    procedure Setup;
+    [TearDown]
+    procedure TearDown;
+
+    // 1. Função direta com vários casos
+    [Test]
+    [TestCase('Valor zero', '0;0', ';')]
+    [TestCase('Valor típico', '150,00;15', ';')]
+    procedure {{Funcao}}_Casos(const AEntrada, AEsperado: Double);
+
+    // 2. Regra presa no formulário
+    [Test]
+    procedure {{Form}}_{{Evento}}_CenarioTipico;
+
+    // 3. Saída grande via golden master
+    [Test]
+    procedure {{Alvo}}_SaidaCompleta;
+  end;
+
+implementation
+
+uses
+  System.SysUtils,
+  GoldenMaster
+  {{, UnitsDeProducao}};
+
+procedure TTest{{Alvo}}.Setup;
+begin
+  // Salvar globais, preparar dados fixos, copiar banco de teste
+end;
+
+procedure TTest{{Alvo}}.TearDown;
+begin
+  // Restaurar globais, limpar costuras (ex.: AgoraFunc := nil)
+end;
+
+procedure TTest{{Alvo}}.{{Funcao}}_Casos(const AEntrada, AEsperado: Double);
+begin
+  Assert.AreEqual(AEsperado, {{Funcao}}(AEntrada), 0.001);
+end;
+
+procedure TTest{{Alvo}}.{{Form}}_{{Evento}}_CenarioTipico;
+var
+  F: T{{Form}};
+begin
+  F := T{{Form}}.Create(nil);
+  try
+    // F.edtCampo.Text := '...';
+    // F.{{Evento}}(nil);
+    // Assert.AreEqual('valor atual', F.lblResultado.Caption);
+  finally
+    F.Free;
+  end;
+end;
+
+procedure TTest{{Alvo}}.{{Alvo}}_SaidaCompleta;
+begin
+  // TGoldenMaster.Verify('{{Alvo}}_SaidaCompleta', TextoGerado);
+end;
+
+initialization
+  TDUnitX.RegisterTestFixture(TTest{{Alvo}});
+
+end.

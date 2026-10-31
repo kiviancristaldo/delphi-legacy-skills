@@ -1,0 +1,31 @@
+; =====================================================================
+; Regras do PROJETO para o reFind (ADO -> FireDAC)
+; São aplicadas ANTES das regras oficiais da Embarcadero.
+; Linhas com ; são comentário. Apague os exemplos que não se aplicam.
+;
+; Sintaxe:
+;   #unuse <unit>                              remove do uses
+;   #remove <propriedade>                      remove do PAS e DFM
+;   #migrate [<Classe>:] <antigo> -> <novo> [, <unit>...]
+;   <regex PCRE> -> <substituição>
+; =====================================================================
+
+; ---------------------------------------------------------------------
+; 1. Classes próprias herdadas de TADOQuery/TADOTable/TADOConnection
+;    As regras oficiais restritas a classe não valem para filhas.
+; ---------------------------------------------------------------------
+;#migrate TMinhaADOQuery:CommandTimeout -> ResourceOptions.CmdExecTimeout, FireDAC.Stan.Option
+;#migrate TMinhaADOQuery:Parameters -> Params, FireDAC.Stan.Param
+;#migrate TMinhaADOQuery:DataSource -> MasterSource
+
+; ---------------------------------------------------------------------
+; 2. Provider no DFM (TFDConnection não tem essa propriedade)
+;    Só descomente depois de anotar os Providers no inventário:
+;    eles são necessários para converter a ConnectionString.
+; ---------------------------------------------------------------------
+;#remove Provider
+
+; ---------------------------------------------------------------------
+; 3. Units do projeto que só existiam por causa do ADO
+; ---------------------------------------------------------------------
+;#unuse uConexaoADO

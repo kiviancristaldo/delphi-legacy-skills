@@ -1,0 +1,48 @@
+﻿program {{Projeto}}Tests;
+
+{$APPTYPE CONSOLE}
+{$STRONGLINKTYPES ON}
+
+uses
+  System.SysUtils,
+  System.IOUtils,
+  DUnitX.Loggers.Console,
+  DUnitX.Loggers.Xml.NUnit,
+  DUnitX.TestFramework,
+  GoldenMaster in 'GoldenMaster.pas',
+  { Units de teste }
+  {{UnitsDeTeste}}
+  { Units de produção usadas pelos testes, ex.:
+    uFinanceiro in '..\src\uFinanceiro.pas', }
+  {{UnitsDeProducao}};
+
+var
+  Runner: ITestRunner;
+  Results: IRunResults;
+begin
+  // Testes determinísticos: mesmo formato de número/data em qualquer máquina
+  FormatSettings := TFormatSettings.Create('pt-BR');
+
+  // Saídas aprovadas ficam versionadas em Testes\approved (o exe fica em Win32\Debug)
+  TGoldenMaster.Folder := TPath.GetFullPath(
+    TPath.Combine(ExtractFilePath(ParamStr(0)), '..\..\approved'));
+
+  try
+    TDUnitX.CheckCommandLine;
+    Runner := TDUnitX.CreateRunner;
+    Runner.UseRTTI := True;
+    Runner.FailsOnNoAsserts := True;
+    Runner.AddLogger(TDUnitXConsoleLogger.Create(True));
+    Runner.AddLogger(TDUnitXXMLNUnitFileLogger.Create(TDUnitX.Options.XMLOutputFile));
+
+    Results := Runner.Execute;
+    if not Results.AllPassed then
+      System.ExitCode := 1;
+  except
+    on E: Exception do
+    begin
+      Writeln(E.ClassName, ': ', E.Message);
+      System.ExitCode := 2;
+    end;
+  end;
+end.

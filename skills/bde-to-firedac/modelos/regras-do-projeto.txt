@@ -1,0 +1,37 @@
+; =====================================================================
+; Regras do PROJETO para o reFind (BDE -> FireDAC)
+; São aplicadas ANTES das regras oficiais da Embarcadero.
+; Linhas com ; são comentário. Apague os exemplos que não se aplicam.
+;
+; Sintaxe:
+;   #unuse <unit>                              remove do uses
+;   #remove <propriedade>                      remove do PAS e DFM
+;   #migrate [<Classe>:] <antigo> -> <novo> [, <unit>...]
+;   <regex PCRE> -> <substituição>
+; =====================================================================
+
+; ---------------------------------------------------------------------
+; 1. Classes próprias herdadas de TQuery/TTable
+;    As regras oficiais com restrição de classe não valem para elas.
+;    Para cada classe filha do inventário, duplique as regras abaixo.
+; ---------------------------------------------------------------------
+;#migrate TMinhaQuery:DataSource -> MasterSource
+;#migrate TMinhaTable:ReadOnly -> UpdateOptions.ReadOnly
+
+; ---------------------------------------------------------------------
+; 2. Units do projeto/terceiros que só existiam por causa do BDE
+; ---------------------------------------------------------------------
+;#unuse uConexaoBDE
+;#unuse DBLogDlg
+
+; ---------------------------------------------------------------------
+; 3. Propriedades de componentes de terceiros que deixam de existir
+;    Cuidado: #remove vale para QUALQUER componente com essa propriedade.
+; ---------------------------------------------------------------------
+;#remove AutoRefresh
+
+; ---------------------------------------------------------------------
+; 4. Nome de alias que muda (regex)
+;    Ex.: todos os datasets apontavam para o alias 'DBDEMOS'
+; ---------------------------------------------------------------------
+;\bConnectionName( *[:]*= *)'DBDEMOS' -> ConnectionName\1'PRINCIPAL'

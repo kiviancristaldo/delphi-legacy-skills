@@ -1,0 +1,5 @@
+# Relatórios gerados ao testar os scripts
+_modernizacao/
+_migracao/
+_build/
+*.zip
