@@ -1,0 +1,218 @@
+﻿unit frmProdutos;   // mantém o NOME da unit e da classe do form legado
+
+{ View depois da transformação: só tela.
+  - Fala apenas com o Controller (FController). Nada de DataModule, query ou SQL.
+  - O grid continua um TDBGrid, ligado a um TFDMemTable local (MTB_Produtos),
+    preenchido a partir do Controller.
+  - Os TDBEdit viraram TEdit/TCheckBox/TComboBox comuns.
+  - Layout, captions, ordem de tabulação e fluxo dos botões continuam iguais ao legado. }
+
+interface
+
+uses
+  Winapi.Windows,
+  Winapi.Messages,
+  System.SysUtils,
+  System.Classes,
+  Vcl.Graphics,
+  Vcl.Controls,
+  Vcl.Forms,
+  Vcl.Dialogs,
+  Vcl.StdCtrls,
+  Vcl.ExtCtrls,
+  Vcl.Grids,
+  Vcl.DBGrids,
+  Data.DB,
+  FireDAC.Stan.Intf,
+  FireDAC.Stan.Option,
+  FireDAC.Stan.Param,
+  FireDAC.Stan.Error,
+  FireDAC.DatS,
+  FireDAC.Phys.Intf,
+  FireDAC.DApt.Intf,
+  FireDAC.Comp.DataSet,
+  FireDAC.Comp.Client,
+  Types.Produtos,
+  Models.Produtos,
+  Controllers.Produtos;
+
+type
+  TfrmProdutos = class(TForm)
+    // ... componentes do .dfm (mesmos nomes e classes do .dfm)
+    edtId: TEdit;
+    edtNome: TEdit;
+    edtPreco: TEdit;
+    cbxCategoria: TComboBox;
+    chkAtivo: TCheckBox;
+    grdProdutos: TDBGrid;
+    MTB_Produtos: TFDMemTable;
+    MTB_ProdutosID: TIntegerField;
+    MTB_ProdutosNOME: TStringField;
+    MTB_ProdutosPRECO: TCurrencyField;
+    DS_Produtos: TDataSource;
+    btnNovo: TButton;
+    btnGravar: TButton;
+    btnCancelar: TButton;
+    btnExcluir: TButton;
+    procedure FormCreate(Sender: TObject);
+    procedure FormDestroy(Sender: TObject);
+    procedure DS_ProdutosDataChange(Sender: TObject; Field: TField);
+    procedure btnNovoClick(Sender: TObject);
+    procedure btnGravarClick(Sender: TObject);
+    procedure btnCancelarClick(Sender: TObject);
+    procedure btnExcluirClick(Sender: TObject);
+  private
+    FController: TControllerProdutos;
+    FIdAtual: Integer;
+    FIncluindo: Boolean;
+    procedure AtualizarView;               // lista -> grid (nome do curso)
+    procedure CarregarRegistroSelecionado; // grid -> campos
+    procedure MostrarProduto(AProduto: TProduto);
+    procedure PreencherProduto(AProduto: TProduto);
+    procedure LimparCampos;
+  end;
+
+var
+  frmProdutos: TfrmProdutos;
+
+implementation
+
+{$R *.dfm}
+
+procedure TfrmProdutos.FormCreate(Sender: TObject);
+begin
+  FController := TControllerProdutos.Create;
+  MTB_Produtos.CreateDataSet;
+  AtualizarView;                       // antes: DataModule.qrProdutos.Open
+end;
+
+procedure TfrmProdutos.FormDestroy(Sender: TObject);
+begin
+  FController.Free;
+end;
+
+procedure TfrmProdutos.AtualizarView;
+var
+  Produto: TProduto;
+  IdAnterior: Integer;
+begin
+  IdAnterior := FIdAtual;
+  FController.Carregar;
+  MTB_Produtos.DisableControls;
+  try
+    MTB_Produtos.EmptyDataSet;
+    for Produto in FController.Itens do
+      MTB_Produtos.AppendRecord([Produto.Id, Produto.Nome, Produto.Preco]);
+    if (IdAnterior > 0) and not MTB_Produtos.Locate('ID', IdAnterior, []) then
+      MTB_Produtos.First;
+  finally
+    MTB_Produtos.EnableControls;      // dispara um único OnDataChange
+  end;
+end;
+
+procedure TfrmProdutos.DS_ProdutosDataChange(Sender: TObject; Field: TField);
+begin
+  // O TDBEdit acompanhava o grid sozinho; agora isto faz esse papel
+  if (Field = nil) and not FIncluindo then
+    CarregarRegistroSelecionado;
+end;
+
+procedure TfrmProdutos.CarregarRegistroSelecionado;
+var
+  Produto: TProduto;
+begin
+  if MTB_Produtos.IsEmpty then
+  begin
+    FIdAtual := 0;
+    LimparCampos;
+    Exit;
+  end;
+  Produto := FController.BuscarPorId(MTB_ProdutosID.AsInteger);
+  try
+    if Produto <> nil then
+      MostrarProduto(Produto);
+  finally
+    Produto.Free;
+  end;
+end;
+
+procedure TfrmProdutos.MostrarProduto(AProduto: TProduto);
+begin
+  FIdAtual := AProduto.Id;
+  edtId.Text := AProduto.Id.ToString;
+  edtNome.Text := AProduto.Nome;
+  edtPreco.Text := FormatFloat('0.00', AProduto.Preco);
+  cbxCategoria.ItemIndex := Ord(AProduto.Categoria);
+  chkAtivo.Checked := AProduto.Ativo;
+end;
+
+procedure TfrmProdutos.PreencherProduto(AProduto: TProduto);
+var
+  Preco: Double;
+begin
+  // Conversão de texto é responsabilidade da tela; regra de negócio, do Controller
+  AProduto.Id := FIdAtual;
+  AProduto.Nome := Trim(edtNome.Text);
+  Preco := 0;
+  if (Trim(edtPreco.Text) <> '') and not TryStrToFloat(Trim(edtPreco.Text), Preco) then
+    raise EValidacaoProdutos.Create('Preço inválido.');
+  AProduto.Preco := Preco;
+  AProduto.Categoria := TCategoriaProduto(cbxCategoria.ItemIndex);
+  AProduto.Ativo := chkAtivo.Checked;
+end;
+
+procedure TfrmProdutos.LimparCampos;
+begin
+  edtId.Clear;
+  edtNome.Clear;
+  edtPreco.Clear;
+  cbxCategoria.ItemIndex := 0;
+  chkAtivo.Checked := True;
+end;
+
+procedure TfrmProdutos.btnNovoClick(Sender: TObject);
+begin
+  FIncluindo := True;                  // antes: qrProdutos.Append
+  FIdAtual := 0;
+  LimparCampos;
+  edtNome.SetFocus;
+end;
+
+procedure TfrmProdutos.btnGravarClick(Sender: TObject);
+var
+  Produto: TProduto;
+begin
+  Produto := TProduto.Create;          // antes: qrProdutos.Post
+  try
+    PreencherProduto(Produto);
+    if FIncluindo then
+      FController.Inserir(Produto)
+    else if not FController.Alterar(Produto) then
+      raise EValidacaoProdutos.Create('O produto não existe mais.');
+    FIdAtual := Produto.Id;
+  finally
+    Produto.Free;
+  end;
+  FIncluindo := False;
+  AtualizarView;
+end;
+
+procedure TfrmProdutos.btnCancelarClick(Sender: TObject);
+begin
+  FIncluindo := False;                 // antes: qrProdutos.Cancel
+  CarregarRegistroSelecionado;
+end;
+
+procedure TfrmProdutos.btnExcluirClick(Sender: TObject);
+begin
+  if FIdAtual <= 0 then
+    Exit;
+  // Mantenha a confirmação somente se o legado perguntava
+  if MessageDlg('Excluir o produto?', mtConfirmation, [mbYes, mbNo], 0) <> mrYes then
+    Exit;
+  FController.Excluir(FIdAtual);       // antes: qrProdutos.Delete
+  FIdAtual := 0;
+  AtualizarView;
+end;
+
+end.

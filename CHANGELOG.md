@@ -1,6 +1,10 @@
 # Histórico de versões
 
 ## Não lançado
+- `delphi-safe-refactoring`: novo modo de transformação em camadas (Types, Connection, Models,
+  Controllers, View) com endpoints Horse, baseado no curso de Delphi da Kivian e inspirado na
+  c4d-rad-to-poo; modelos de um cadastro completo; scripts de codificação, validação de .dfm e
+  teste de endpoints.
 - Badge do skills.sh no README.
 - `docs/roteiro-de-testes.md`: roteiro de testes por skill, com ideias de vídeo.
 - `tools/Testar-Sintaxe.ps1`: confere a sintaxe e o BOM de todos os scripts.

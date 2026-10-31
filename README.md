@@ -29,7 +29,7 @@ Organizadas nas etapas da reforma: **Diagnostique → Proteja → Limpe → Orga
 | Proteja | [`delphi-characterization-tests`](skills/delphi-characterization-tests) | Testes de caracterização (golden master) com DUnitX: a rede de segurança antes de mexer |
 | Limpe | [`delphi-cleanup`](skills/delphi-cleanup) | `with`, `except` vazio, vazamentos, código comentado e sem uso, senhas no código |
 | Organize | [`delphi-coding-standards`](skills/delphi-coding-standards) | Modelo do padrão de código do time, para a IA escrever e revisar do seu jeito |
-| Refatore | [`delphi-safe-refactoring`](skills/delphi-safe-refactoring) | Tira a regra da tela, quebra métodos, units e DataModules, elimina duplicação e acoplamento |
+| Refatore | [`delphi-safe-refactoring`](skills/delphi-safe-refactoring) | Transforma telas RAD (DataModule + DB-aware) em camadas Types/Connection/Models/Controllers/View com endpoints Horse; quebra métodos, units e DataModules, elimina duplicação e acoplamento |
 | Modernize: versão | [`delphi-unicode-migration`](skills/delphi-unicode-migration) | Delphi 2007 ou anterior → Unicode |
 | | [`delphi-64bit-ready`](skills/delphi-64bit-ready) | Win32 → Win64 |
 | | [`delphi-compile-loop`](skills/delphi-compile-loop) | Compila com MSBuild e corrige em ciclos até zerar erros, warnings e hints |
@@ -83,6 +83,7 @@ Faça um diagnóstico deste sistema e me diga por onde começar a modernizar.
 Crie testes de caracterização para o cálculo do btnCalcularClick do frmPedido.
 Tire os with da unit uPedidos sem mudar comportamento.
 Separe a regra de negócio do frmPedido numa unit testável.
+Transforme o cadastro de produtos em camadas e crie os endpoints em Horse.
 Migre este projeto de BDE para FireDAC.
 Compile o projeto e zere os warnings de string.
 Quais construções do Firebird precisam mudar para PostgreSQL?
