@@ -56,10 +56,10 @@ $binarios = @()
 foreach ($f in $forms) {
   $fs = [IO.File]::OpenRead($f.FullName)
   try {
-    $b = New-Object byte[] 4
-    $n = $fs.Read($b, 0, 4)
+    $b = New-Object byte[] 64
+    $n = $fs.Read($b, 0, 64)
   } finally { $fs.Close() }
-  if ($n -eq 4 -and [Text.Encoding]::ASCII.GetString($b) -eq 'TPF0') { $binarios += $f }
+  if ((($n -ge 4 -and [Text.Encoding]::ASCII.GetString($b, 0, 4) -eq 'TPF0') -or ($n -ge 3 -and $b[0] -eq 0xFF -and $b[1] -eq 0x0A -and [Text.Encoding]::ASCII.GetString($b, 0, $n).Contains('TPF0')))) { $binarios += $f }
 }
 $rel.Add("## 1. DFMs em formato binário: $($binarios.Count)")
 if ($binarios.Count -gt 0) {
@@ -143,6 +143,16 @@ foreach ($p in $perfil.Props) {
 }
 $rel.Add("")
 
+# 6b. Campos persistentes específicos do dbExpress
+if ($Origem -eq 'DBX') {
+  $ts = @($forms | Where-Object { $binarios -notcontains $_ } |
+          Select-String -Pattern '^\s*(object|inherited)\s+\w+\s*:\s*TSQLTimeStampField\b' -ErrorAction SilentlyContinue)
+  $rel.Add("## 6b. Campos TSQLTimeStampField: $($ts.Count)")
+  $rel.Add("Confira, depois do reFind, a classe que o FireDAC cria para essas colunas (dtDateTimeStamp → TSQLTimeStampField;")
+  $rel.Add("com FormatOptions.MapRules pode virar TDateTimeField) e deixe os campos persistentes iguais: divergência dá 'Type mismatch' ao abrir o form.")
+  $ts | Select-Object -First 30 | ForEach-Object { $rel.Add("- $($_.Filename):$($_.LineNumber) ``$($_.Line.Trim())``") }
+  $rel.Add("")
+}
 # 7. Sinais de Paradox/dBase (BDE) e de arquivos locais (ADO/Jet)
 if ($Origem -eq 'BDE') {
   $local = @($forms | Where-Object { $binarios -notcontains $_ } |

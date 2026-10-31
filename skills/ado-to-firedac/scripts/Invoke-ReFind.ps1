@@ -89,8 +89,8 @@ if (-not $recurse) { $forms = @(Get-ChildItem -Path (Join-Path $Pasta '*') -Incl
 $binarios = @()
 foreach ($f in $forms) {
   $fs = [IO.File]::OpenRead($f.FullName)
-  try { $b = New-Object byte[] 4; $n = $fs.Read($b, 0, 4) } finally { $fs.Close() }
-  if ($n -eq 4 -and [Text.Encoding]::ASCII.GetString($b) -eq 'TPF0') { $binarios += $f.FullName }
+  try { $b = New-Object byte[] 64; $n = $fs.Read($b, 0, 64) } finally { $fs.Close() }
+  if ((($n -ge 4 -and [Text.Encoding]::ASCII.GetString($b, 0, 4) -eq 'TPF0') -or ($n -ge 3 -and $b[0] -eq 0xFF -and $b[1] -eq 0x0A -and [Text.Encoding]::ASCII.GetString($b, 0, $n).Contains('TPF0')))) { $binarios += $f.FullName }
 }
 if ($binarios.Count -gt 0) {
   Write-Host "PARE: $($binarios.Count) DFM(s) binário(s). Converta para texto com $(Join-Path $root 'bin\convert.exe') -t <arquivo>:"
@@ -196,7 +196,15 @@ if ($migrate.Count -gt 0) {
 if ($temGit) {
   Write-Host ''
   Write-Host 'Resumo das alterações (git diff --stat):'
-  & git -C $Pasta diff --stat | Select-Object -Last 15 | ForEach-Object { Write-Host "  $_" }
+  # Mostra todos os arquivos até 40; acima disso, os primeiros e a linha de totais
+  $stat = @(& git -C $Pasta diff --stat)
+  if ($stat.Count -le 40) {
+    $stat | ForEach-Object { Write-Host "  $_" }
+  } else {
+    $stat | Select-Object -First 38 | ForEach-Object { Write-Host "  $_" }
+    Write-Host "  ... mais $($stat.Count - 39) arquivo(s) (git diff --stat completo)"
+    Write-Host "  $($stat[-1])"
+  }
 }
 Write-Host ''
 Write-Host 'Próximo passo: compilar com a skill delphi-compile-loop e rodar o teste de carga de forms.'

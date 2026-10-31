@@ -69,8 +69,8 @@ foreach ($r in $regras) { $achados[$r[0]] = New-Object System.Collections.Generi
 foreach ($f in $arquivos) {
   # DFM binário não tem SQL legível
   $fs = [IO.File]::OpenRead($f.FullName)
-  try { $b = New-Object byte[] 4; $n = $fs.Read($b, 0, 4) } finally { $fs.Close() }
-  if ($n -eq 4 -and [Text.Encoding]::ASCII.GetString($b) -eq 'TPF0') { continue }
+  try { $b = New-Object byte[] 64; $n = $fs.Read($b, 0, 64) } finally { $fs.Close() }
+  if ((($n -ge 4 -and [Text.Encoding]::ASCII.GetString($b, 0, 4) -eq 'TPF0') -or ($n -ge 3 -and $b[0] -eq 0xFF -and $b[1] -eq 0x0A -and [Text.Encoding]::ASCII.GetString($b, 0, $n).Contains('TPF0')))) { continue }
 
   $rel = $f.FullName.Substring($Pasta.Length + 1)
   $i = 0

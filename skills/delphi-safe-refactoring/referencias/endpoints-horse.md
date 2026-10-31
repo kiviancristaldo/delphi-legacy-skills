@@ -45,12 +45,18 @@ boss install handle-exception
 
 ## Testando
 1. Rode o servidor e confira `http://localhost:9000/produtos` no navegador.
-2. Rode o script de teste da skill:
+2. Rode o script de teste da skill, num prompt do PowerShell, com `&`:
    ```
-   powershell -ExecutionPolicy Bypass -File scripts/Test-Endpoints.ps1 -BaseUrl http://localhost:9000 -Recurso produtos -Corpo '{"nome":"Teste skill","preco":9.9,"categoria":0,"ativo":true}'
+   & .\scripts\Test-Endpoints.ps1 -BaseUrl http://localhost:9000 -Recurso produtos -Corpo '{"nome":"Teste skill","preco":9.9,"categoria":0,"ativo":true}' -CorpoInvalido '{"nome":""}'
    ```
    Ele faz GET (lista), POST, GET por id, PUT, DELETE, GET de um id inexistente (espera 404) e
    POST inválido (espera 400), e mostra o status de cada chamada.
+   - **Não** use `powershell -File ... -Corpo '{...}'` a partir do Windows PowerShell 5.1: as aspas
+     duplas internas somem e o servidor recebe JSON inválido. Com `powershell -File` ou no `cmd.exe`,
+     grave o JSON em arquivo e use `-CorpoArquivo corpo.json` / `-CorpoInvalidoArquivo invalido.json`.
+   - `-CorpoInvalido` precisa violar uma **regra real** do Controller (o padrão, nome vazio, só serve
+     quando o nome é obrigatório). Ex.: se o legado aceitava nome vazio mas limitava a 50 caracteres,
+     mande um nome com 51.
 3. Teste com o banco de **cópia**: o script grava e apaga um registro.
 
 ## Alternativa: DataSnap (como no curso)

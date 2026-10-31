@@ -61,8 +61,8 @@ foreach ($f in $arquivos) {
   $rel = $f.FullName.Substring($Pasta.Length + 1)
   if ($f.Extension -eq '.dfm') {
     $fs = [IO.File]::OpenRead($f.FullName)
-    try { $b = New-Object byte[] 4; $n = $fs.Read($b, 0, 4) } finally { $fs.Close() }
-    if ($n -eq 4 -and [Text.Encoding]::ASCII.GetString($b) -eq 'TPF0') { Write-Host "  DFM binário ignorado: $rel"; continue }
+    try { $b = New-Object byte[] 64; $n = $fs.Read($b, 0, 64) } finally { $fs.Close() }
+    if ((($n -ge 4 -and [Text.Encoding]::ASCII.GetString($b, 0, 4) -eq 'TPF0') -or ($n -ge 3 -and $b[0] -eq 0xFF -and $b[1] -eq 0x0A -and [Text.Encoding]::ASCII.GetString($b, 0, $n).Contains('TPF0')))) { Write-Host "  DFM binário ignorado: $rel"; continue }
 
     $pilha = New-Object System.Collections.Generic.List[string]
     $i = 0

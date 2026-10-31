@@ -26,6 +26,7 @@ Copie cada demo para uma pasta de trabalho (ex.: `C:\TesteSkills\MastApp`), nunc
 
 ## Fase 0: instalação e sintaxe
 - [ ] `powershell -ExecutionPolicy Bypass -File tools\Testar-Sintaxe.ps1`: todos os scripts `OK`.
+- [ ] `powershell -ExecutionPolicy Bypass -File tools\Testar-Scripts.ps1`: todas as verificações `OK`.
 - [ ] `npx skills add kiviancristaldo/delphi-legacy-skills --list`: aparecem as 13 skills.
 - [ ] Instalar todas num projeto de teste e **ler a saída inteira**: nenhuma linha `Skipped` ou `parse error`.
 - [ ] Abrir o Claude Code no projeto, digitar `/` e ver as skills listadas.

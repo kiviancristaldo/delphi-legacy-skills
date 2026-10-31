@@ -29,6 +29,8 @@ Use a skill `delphi-compile-loop` (ou o `Build-Delphi.ps1` dela). Erros comuns d
 | `Undeclared identifier: 'DataModule2'` | sobrou referência ao DataModule no form |
 | Erro ao abrir o form: `Class TDBEdit not found` / `Property DataField does not exist` | `.dfm` e `.pas` divergentes (classe trocada só num deles) |
 | `Object factory for class ... missing` | falta a unit de espera do FireDAC no `.dpr` |
+| `Type mismatch for field 'X', expecting: String actual: WideString` | banco/coluna em UTF8 e TField persistente `TStringField` no DataModule legado; o banco de cópia precisa do mesmo charset do original. Atenção: num `OnCreate` de form esse erro é engolido pela VCL (`Application.HandleException`) e a tela só abre vazia |
+| Hint `H2443 Inline function 'MessageDlg' has not been expanded` | falta `System.UITypes` no `uses` |
 
 Registre as units novas no `.dpr` (`uses ... in '...'`) e no `.dproj` (`DCCReference`).
 
@@ -37,6 +39,7 @@ Procure no form transformado; nada disto pode sobrar:
 - `TDB` (exceto `TDBGrid`), `DataField`, `ValueChecked`;
 - o nome do DataModule e das queries antigas;
 - SQL na unit do form.
+Menções em comentários (`// antes: DataModule2.qrX.Open`) são aceitas: o que não pode sobrar é código.
 Procure também no projeto inteiro pelo DataModule: se outras telas ainda usam, ele fica.
 
 ## 5. Testes

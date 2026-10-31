@@ -4,6 +4,7 @@
 {$STRONGLINKTYPES ON}
 
 uses
+  Winapi.Windows,
   System.SysUtils,
   System.IOUtils,
   DUnitX.Loggers.Console,
@@ -20,10 +21,14 @@ var
   Runner: ITestRunner;
   Results: IRunResults;
 begin
+  // Com a saída redirecionada (Run-Tests.ps1, CI) o DUnitX usa Write: grava na code page do
+  // console para os acentos das mensagens não virarem "n�o"
+  SetTextCodePage(Output, GetConsoleOutputCP);
+
   // Testes determinísticos: mesmo formato de número/data em qualquer máquina
   FormatSettings := TFormatSettings.Create('pt-BR');
 
-  // Saídas aprovadas ficam versionadas em Testes\approved (o exe fica em Win32\Debug)
+  // Saídas aprovadas ficam versionadas em Testes\approved (o exe fica em <Plataforma>\<Config>)
   TGoldenMaster.Folder := TPath.GetFullPath(
     TPath.Combine(ExtractFilePath(ParamStr(0)), '..\..\approved'));
 

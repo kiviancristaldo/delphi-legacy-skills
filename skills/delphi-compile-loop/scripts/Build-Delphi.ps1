@@ -121,7 +121,9 @@ $resultado = [pscustomobject]@{
   totais       = [pscustomobject]@{ fatal = $fatais; error = $erros; warning = $warnings; hint = $hints }
   porCodigo    = @($porCodigo)
   outrosErros  = $outrosErros
-  itens        = @($itens)
+  # ToArray(): no PS 5.1, @($lista) com List[object] dentro de um hashtable literal lança
+  # "Os tipos de argumento não correspondem" (ArgumentException), mesmo com a lista vazia
+  itens        = $itens.ToArray()
 }
 $resultado | ConvertTo-Json -Depth 5 | Set-Content -Path $Saida -Encoding UTF8
 

@@ -4,22 +4,47 @@
   GET lista, POST, GET por id, PUT, DELETE, GET de id inexistente (404) e POST inválido (400).
 
 .EXAMPLE
-  powershell -ExecutionPolicy Bypass -File Test-Endpoints.ps1 -BaseUrl http://localhost:9000 -Recurso produtos -Corpo '{"nome":"Teste skill","preco":9.9,"categoria":0,"ativo":true}'
+  # Num prompt do PowerShell: chame o script com & (o JSON chega intacto)
+  & .\Test-Endpoints.ps1 -BaseUrl http://localhost:9000 -Recurso produtos -Corpo '{"nome":"Teste skill","preco":9.9,"categoria":0,"ativo":true}'
+
+.EXAMPLE
+  # Com powershell -File (ou a partir do cmd.exe), passe o JSON em arquivo
+  powershell -ExecutionPolicy Bypass -File Test-Endpoints.ps1 -BaseUrl http://localhost:9000 -Recurso produtos -CorpoArquivo corpo.json -CorpoInvalidoArquivo invalido.json
 
 .NOTES
   GRAVA E APAGA um registro: use um banco de cópia.
-  -CorpoInvalido: JSON que deve ser recusado com 400 (padrão: nome vazio).
+  -CorpoInvalido: JSON que deve ser recusado com 400. O padrão (nome vazio) só serve se o
+  assunto exige nome; informe um corpo que viole uma regra real do Controller.
+  Não use "powershell -File ... -Corpo '{...}'" a partir do PowerShell 5.1: ele remove as
+  aspas duplas internas e o servidor recebe JSON inválido (o 400 do teste inválido passaria
+  pelo motivo errado). O script avisa se o corpo não for JSON válido.
 #>
 param(
   [Parameter(Mandatory = $true)] [string]$BaseUrl,
   [Parameter(Mandatory = $true)] [string]$Recurso,
-  [Parameter(Mandatory = $true)] [string]$Corpo,
+  [string]$Corpo = '',
+  [string]$CorpoArquivo = '',
   [string]$CorpoInvalido = '{"nome":""}',
+  [string]$CorpoInvalidoArquivo = '',
   [string]$CampoId = 'id',
   [int]$IdInexistente = 999999999
 )
 
 $ErrorActionPreference = 'Stop'
+
+if ($CorpoArquivo) { $Corpo = [IO.File]::ReadAllText((Resolve-Path $CorpoArquivo).Path, [Text.Encoding]::UTF8) }
+if ($CorpoInvalidoArquivo) { $CorpoInvalido = [IO.File]::ReadAllText((Resolve-Path $CorpoInvalidoArquivo).Path, [Text.Encoding]::UTF8) }
+if (-not $Corpo) { Write-Host 'Informe -Corpo ou -CorpoArquivo.'; exit 2 }
+
+# Os dois corpos precisam ser JSON válido: o inválido deve violar uma REGRA, não a sintaxe
+foreach ($par in @(@('Corpo', $Corpo), @('CorpoInvalido', $CorpoInvalido))) {
+  try { $null = $par[1] | ConvertFrom-Json }
+  catch {
+    Write-Host "O parâmetro -$($par[0]) não é JSON válido: $($par[1])" -ForegroundColor Red
+    Write-Host 'Se você chamou com powershell -File, as aspas duplas foram removidas: use & .\Test-Endpoints.ps1 ou -CorpoArquivo.'
+    exit 2
+  }
+}
 $url = $BaseUrl.TrimEnd('/') + '/' + $Recurso.Trim('/')
 $resultados = New-Object System.Collections.Generic.List[object]
 

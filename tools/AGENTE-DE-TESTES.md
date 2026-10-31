@@ -9,8 +9,12 @@ Não corrija as skills: só teste e relate. Quem corrige é quem mantém o kit, 
    do Delphi e os projetos do usuário são somente leitura.
 2. **Não instale nada sem perguntar** (Boss, pacotes npm, Firebird, componentes). Se um teste
    depender de algo que não está instalado, marque como `PULADO` com o motivo.
-3. **Banco de dados:** só use bancos de cópia dentro de `C:\TesteSkills`. Nunca conecte em servidor.
+3. **Banco de dados:** só use bancos de cópia dentro de `C:\TesteSkills`. Nunca conecte em servidor
+   remoto nem abra bancos fora de `C:\TesteSkills`. Se o Firebird local estiver instalado como serviço,
+   use `localhost` apenas com os arquivos de cópia.
 4. Rode os scripts com o **Windows PowerShell 5.1** (`powershell`, não `pwsh`), que é o mais restritivo.
+   Exceção: script que recebe JSON na linha de comando (`Test-Endpoints.ps1`) se chama com `& script.ps1`
+   dentro de uma sessão do PS 5.1, ou com `-CorpoArquivo`; via `powershell -File` as aspas do JSON somem.
 5. Guarde a saída completa de cada comando em `C:\TesteSkills\logs\<nn>-<nome>.txt`.
 6. Se algo falhar, **não tente contornar editando a skill**. Registre a falha com a saída e siga para o próximo teste.
 7. Ao final, entregue `C:\TesteSkills\RELATORIO-TESTES.md` (formato no fim deste arquivo).
@@ -30,8 +34,10 @@ Não corrija as skills: só teste e relate. Quem corrige é quem mantém o kit, 
 |---|---|---|---|
 | 1.1 | Sintaxe dos scripts | `powershell -ExecutionPolicy Bypass -File C:\TesteSkills\delphi-legacy-skills\tools\Testar-Sintaxe.ps1` | todas as linhas `OK`, código de saída 0 |
 | 1.2 | Lista das skills | `npx skills add kiviancristaldo/delphi-legacy-skills --list` (pergunte antes, se `npx` não estiver instalado) | 13 skills listadas |
+| 1.3 | Smoke test dos scripts | `powershell -ExecutionPolicy Bypass -File C:\TesteSkills\delphi-legacy-skills\tools\Testar-Scripts.ps1` | todas as verificações `OK`, código de saída 0 (sem Delphi, as de build/DFM aparecem como `PULADO`) |
 
-Se 1.1 falhar, **continue mesmo assim**, mas registre cada script com erro: os testes que dependem dele vão falhar também.
+Se 1.1 ou 1.3 falharem, **continue mesmo assim**, mas registre cada script com erro: os testes que dependem dele vão falhar também.
+O 1.1 só confere sintaxe; o 1.3 executa os scripts e pega erros de execução (por exemplo, incompatibilidades do PS 5.1).
 
 Nos comandos abaixo, `$K` = `C:\TesteSkills\delphi-legacy-skills\skills`.
 
@@ -78,23 +84,30 @@ end;
 end.
 ```
 Siga a skill `delphi-characterization-tests` (`$K\delphi-characterization-tests\SKILL.md`) para criar
-o projeto de testes com os modelos da pasta `modelos\`, incluindo o `GoldenMaster.pas`.
+o projeto de testes com os modelos da pasta `modelos\`, incluindo o `GoldenMaster.pas` e o
+`ProjetoTestes.dproj.modelo`. Confira antes em que plataforma o DUnitX está compilado
+(`lib\win32\release` e `lib\win64\release` do RAD Studio) e use `-Plataforma` de acordo.
 
 | # | Teste | Passa se |
 |---|---|---|
-| 4.1 | Projeto de testes compila | `Run-Tests.ps1 -Projeto <...>Tests.dproj` compila (crie o `.dproj` com MSBuild a partir do `.dpr`, ou registre como PULADO se não for possível sem a IDE) |
+| 4.1 | Projeto de testes compila | `Run-Tests.ps1 -Projeto <...>Tests.dproj` compila (`.dproj` criado a partir de `ProjetoTestes.dproj.modelo`) |
 | 4.2 | Testes passam | código de saída 0 |
 | 4.3 | Golden master | a primeira execução cria `.received.txt`; `Approve-GoldenMaster.ps1` aprova; a segunda passa |
 | 4.4 | Teste dos testes | troque `> 1000` por `>= 1000`, rode: **algum teste precisa falhar**; desfaça |
 
 ## Etapa 5: transformação em camadas (gera código)
 Alvo: o cadastro de categorias do curso (`cursoEmbarcadero\Módulo Plataformas`, unit `unCategoria`),
-copiado para `C:\TesteSkills\ListaCompras`. Se o repositório do curso não estiver no computador,
-registre como PULADO.
+copiado para `C:\TesteSkills\ListaCompras`. O repositório é `github.com/kiviancristaldo/cursoEmbarcadero`
+(privado): se não estiver no computador, pergunte se pode cloná-lo em `C:\TesteSkills`; sem ele, PULADO.
 
 1. Banco: só se o Firebird 3+ estiver instalado. Crie `C:\TesteSkills\ListaCompras\PRODUTOS.FDB` com o
-   script `DATA\Database.sql.txt` do curso e insira 5 categorias e 10 produtos. Aponte o DataModule da
-   **cópia** para esse arquivo. Sem Firebird: PULADO nos itens que precisam de banco.
+   script `DATA\Database.sql.txt` do curso e insira 5 categorias e 10 produtos. Use
+   `DEFAULT CHARACTER SET WIN1252` (os TFields persistentes do curso são `TStringField`; com UTF8 o
+   FireDAC entrega `WideString` e dá "Type mismatch"). Aponte o DataModule da **cópia** para esse arquivo.
+   Sem Firebird: PULADO nos itens que precisam de banco.
+   - **Plataforma**: veja se o `fbclient.dll` instalado é 32 ou 64 bits. Com Firebird 32 bits, aplicativo,
+     servidor e testes precisam ser **Win32**; se o DUnitX só vier compilado para Win64, use o fonte do
+     DUnitX (github.com/VSoftTechnologies/DUnitX) no `.dproj` de testes.
 2. Siga a skill `delphi-safe-refactoring`, modo B, para o form de categorias, com endpoints Horse.
    Como você é um agente de teste, responda você mesmo às perguntas da skill com as recomendações
    dela e **registre cada pergunta que a skill fez** (o teste é ver se ela pergunta).
@@ -107,7 +120,7 @@ registre como PULADO.
 | 5.4 | DFM | `Test-Dfm.ps1` nos `.dfm` alterados: todos `OK` |
 | 5.5 | Compila | `Build-Delphi.ps1` no projeto do aplicativo: 0 erros |
 | 5.6 | Servidor | só se o Horse estiver disponível (Boss): compila o servidor; **não instale sem perguntar** |
-| 5.7 | Endpoints | servidor rodando com o banco de cópia: `Test-Endpoints.ps1` com todas as chamadas `OK` |
+| 5.7 | Endpoints | servidor rodando com o banco de cópia: `& $K\delphi-safe-refactoring\scripts\Test-Endpoints.ps1 -BaseUrl http://localhost:9000 -Recurso categorias -Corpo '{"nome":"Teste skill","ordem":7}' -CorpoInvalido <corpo que viole uma regra real>` (chamado com `&` numa sessão do PS 5.1) com todas as chamadas `OK` |
 | 5.8 | Trava de escopo | em outra cópia, peça a transformação da `unListaCompras` (tem `TDBLookupComboBox`): a skill tem que **parar e perguntar** |
 
 ## Etapa 6: limpeza da execução

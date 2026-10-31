@@ -47,10 +47,17 @@ Crie a pasta `Testes\` ao lado do projeto e copie os modelos desta skill:
 - `modelos/ProjetoTestes.dpr.modelo` → `Testes\<Projeto>Tests.dpr`
 - `modelos/GoldenMaster.pas` → `Testes\GoldenMaster.pas`
 - `modelos/TesteCaracterizacao.pas.modelo` → uma unit de teste por alvo, por exemplo `Testes\Test.uFinanceiro.pas`
+- `modelos/ProjetoTestes.dproj.modelo` → `Testes\<Projeto>Tests.dproj` (o MSBuild só compila `.dproj`,
+  e não há como gerá-lo a partir do `.dpr` pela linha de comando)
 
 Substitua os marcadores `{{...}}` dos modelos. Adicione ao `.dpr` de testes as units de
 produção necessárias (`uFinanceiro in '..\src\uFinanceiro.pas'`).
-O `.dproj` é criado abrindo o `.dpr` no Delphi, ou pelo usuário em File > New > Other > DUnitX.
+Alternativa ao modelo de `.dproj`: abrir o `.dpr` no Delphi, ou File > New > Other > DUnitX.
+
+**Plataforma**: confira onde o DUnitX está compilado (`$(BDS)\lib\win32\release\DUnitX.TestFramework.dcu`
+e `...\win64\release\...`); algumas instalações só trazem Win64. Se os testes precisarem de Win32
+(por exemplo, cliente de banco 32 bits como o `fbclient.dll`), use o fonte do DUnitX
+(github.com/VSoftTechnologies/DUnitX, pasta `Source`) em `{{PastaFonteDUnitX}}` no `.dproj`.
 Os atributos e asserts do DUnitX estão resumidos em [referencias/dunitx-resumo.md](referencias/dunitx-resumo.md).
 
 ### 4. Gerar os casos
