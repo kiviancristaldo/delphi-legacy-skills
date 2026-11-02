@@ -124,8 +124,11 @@ Detalhes em [validacao.md](referencias/validacao.md).
 ### B9. Testes
 1. Testes de caracterização do legado continuam passando.
 2. Teste DUnitX do Controller contra uma **cópia** do banco (inserir, buscar, alterar, cada validação, excluir).
-3. Endpoints: `scripts/Test-Endpoints.ps1` contra o servidor rodando com banco de cópia.
+3. Endpoints: `scripts/Test-Endpoints.ps1` contra o servidor rodando com banco de cópia, chamado
+   com `& .\scripts\Test-Endpoints.ps1` e um `-CorpoInvalido` que viole uma regra real (veja endpoints-horse.md).
 4. Banco em servidor: pergunte antes, porque os testes gravam dados.
+5. A plataforma dos testes segue o cliente do banco: com Firebird/cliente 32 bits, compile os testes
+   em Win32 (o executável Win64 não carrega `fbclient.dll` de 32 bits).
 
 ### B10. Relatório
 - Arquivos criados, alterados e removidos.
@@ -142,6 +145,8 @@ Detalhes em [validacao.md](referencias/validacao.md).
 - `TClientDataSet` + `TDataSetProvider`, cached updates, `TDBNavigator` controlando o dataset.
 - SQL de outras tabelas disparado pelo form ou por triggers que ele depende.
 - Imagens e blobs (`TDBImage`).
+- Herança visual: o form herda de outro form do projeto que já tem componentes DB (mexer na base
+  muda as outras telas que herdam dela). Proponha herdar de `TForm` copiando o layout.
 - Componentes DB de terceiros sem equivalente comum claro.
 
 ## Créditos

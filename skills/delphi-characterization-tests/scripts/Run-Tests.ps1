@@ -57,6 +57,13 @@ Remove-Item $bat -ErrorAction SilentlyContinue
 
 if ($codigo -ne 0) {
   $saida | Where-Object { $_ -match ':\s+(error|fatal)\s' } | Select-Object -Unique | ForEach-Object { Write-Host $_ }
+  if ($saida -match "F2613: Unit 'DUnitX\.") {
+    $outra = if ($Plataforma -eq 'Win32') { 'Win64' } else { 'Win32' }
+    $lib = Join-Path $root "lib\$($outra.ToLower())\release\DUnitX.TestFramework.dcu"
+    Write-Host "O DUnitX não está compilado para $Plataforma nesta instalação."
+    if (Test-Path $lib) { Write-Host "Ele existe para ${outra}: rode com -Plataforma $outra, se o projeto permitir." }
+    Write-Host 'Ou use o fonte do DUnitX (github.com/VSoftTechnologies/DUnitX, pasta Source) no search path do .dproj.'
+  }
   Write-Host "Falha na compilação dos testes (código $codigo). Use a skill delphi-compile-loop."
   exit 2
 }

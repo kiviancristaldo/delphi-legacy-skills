@@ -48,10 +48,14 @@ try {
     $saida = (& $convert -i $copia 2>&1 | Out-String)
     $ErrorActionPreference = 'Stop'
 
-    # Sucesso = a cópia virou binário (assinatura TPF0)
+    # Sucesso = a cópia virou binário. O .dfm binário começa com um cabeçalho de recurso
+    # (FF 0A 00 + nome do form + flags + tamanho) e só depois vem a assinatura TPF0;
+    # um .dfm em texto que o convert.exe não conseguiu converter continua começando com texto.
     $fs = [IO.File]::OpenRead($copia)
-    try { $b = New-Object byte[] 4; $n = $fs.Read($b, 0, 4) } finally { $fs.Close() }
-    if ($n -eq 4 -and [Text.Encoding]::ASCII.GetString($b) -eq 'TPF0') {
+    try { $b = New-Object byte[] 512; $n = $fs.Read($b, 0, 512) } finally { $fs.Close() }
+    $inicio = [Text.Encoding]::ASCII.GetString($b, 0, $n)
+    $binario = ($n -ge 4) -and (($inicio.StartsWith('TPF0')) -or ($b[0] -eq 0xFF -and $b[1] -eq 0x0A -and $inicio.Contains('TPF0')))
+    if ($binario) {
       Write-Host "OK     $dfm"
     } else {
       $falhas++

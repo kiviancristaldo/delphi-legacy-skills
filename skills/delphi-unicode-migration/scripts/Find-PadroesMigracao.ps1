@@ -28,7 +28,8 @@ $ErrorActionPreference = 'Stop'
 $Pasta = (Resolve-Path $Pasta).Path
 $recurse = [bool]$Recursivo
 
-# Nome | regex (ignora maiúsculas) | risco | o que fazer
+# Nome | regex (ignora maiúsculas, salvo 5º item 'cs') | risco | o que fazer [| 'cs']
+# A busca ignora comentários e o conteúdo de strings.
 $regras = @{
   Unicode = @(
     @('Char em set (in [...])',            "\bin\s*\[\s*('|#)",                                         'alto',  'CharInSet(C, [...]) ou funções de System.Character (C.IsDigit)'),
@@ -56,9 +57,43 @@ $regras = @{
     @('Registro gravado em arquivo',       '\bfile\s+of\b|\bpacked\s+record\b',                          'médio', 'tamanhos de Pointer/NativeInt mudam: arquivos gravados no 32 não leem no 64'),
     @('IFDEF WIN32',                       '\{\$IFDEF\s+WIN32\}|\{\$IF\s+DEFINED\s*\(\s*WIN32\s*\)',     'médio', 'use MSWINDOWS para código Windows; WIN32 só para o que é exclusivo de 32 bits'),
     @('BDE (não existe em 64 bits)',       '\b(DBTables|Bde\.DBTables)\b',                               'alto',  'migre para FireDAC antes (skill bde-to-firedac)'),
-    @('Componentes sem versão 64 bits',    '\b(Qr\w+|Rave\w+|TwwDB\w+)\b',                               'médio', 'confirme se o fornecedor tem pacote 64 bits')
+    # Diferencia maiúsculas (5º item): QuickReport usa TQR.../QR<Maiúscula>; "QryCliente" não é QuickReport
+    @('Componentes sem versão 64 bits',    '\b(TQR\w+|QR[A-Z]\w*|QuickRpt|TRave\w+|Rave[A-Z]\w*|TwwDB\w+)\b', 'médio', 'confirme se o fornecedor tem pacote 64 bits', 'cs')
   )
 }[$Tipo]
+
+# Tira comentários ({ }, (* *), //) e o conteúdo das strings (mantém as aspas), preservando
+# diretivas {$...}. $Estado guarda o comentário de bloco aberto de uma linha para a outra.
+function Limpar-Linha([string]$Linha, [ref]$Estado) {
+  $sb = New-Object System.Text.StringBuilder
+  $i = 0; $n = $Linha.Length
+  while ($i -lt $n) {
+    $c = $Linha[$i]
+    if ($Estado.Value -eq 'chave') { if ($c -eq '}') { $Estado.Value = '' }; $i++; continue }
+    if ($Estado.Value -eq 'paren') {
+      if ($c -eq '*' -and $i + 1 -lt $n -and $Linha[$i + 1] -eq ')') { $Estado.Value = ''; $i += 2 } else { $i++ }
+      continue
+    }
+    if ($c -eq "'") {
+      $j = $Linha.IndexOf("'", $i + 1)
+      [void]$sb.Append("''")
+      if ($j -lt 0) { break }
+      $i = $j + 1; continue
+    }
+    if ($c -eq '/' -and $i + 1 -lt $n -and $Linha[$i + 1] -eq '/') { break }
+    if ($c -eq '{') {
+      if ($i + 1 -lt $n -and $Linha[$i + 1] -eq '$') {
+        $j = $Linha.IndexOf('}', $i)
+        if ($j -lt 0) { [void]$sb.Append($Linha.Substring($i)); break }
+        [void]$sb.Append($Linha.Substring($i, $j - $i + 1)); $i = $j + 1; continue
+      }
+      $Estado.Value = 'chave'; $i++; continue
+    }
+    if ($c -eq '(' -and $i + 1 -lt $n -and $Linha[$i + 1] -eq '*') { $Estado.Value = 'paren'; $i += 2; continue }
+    [void]$sb.Append($c); $i++
+  }
+  return $sb.ToString().Trim()
+}
 
 $arquivos = if ($recurse) {
   Get-ChildItem -Path $Pasta -Include *.pas, *.dpr, *.inc -File -Recurse -ErrorAction SilentlyContinue
@@ -74,13 +109,16 @@ foreach ($r in $regras) { $achados[$r[0]] = New-Object System.Collections.Generi
 foreach ($f in $arquivos) {
   $rel = $f.FullName.Substring($Pasta.Length + 1)
   $i = 0
+  $estado = ''
   foreach ($l in [IO.File]::ReadAllLines($f.FullName, [Text.Encoding]::Default)) {
     $i++
-    $t = ($l -replace '//.*$', '').Trim()
+    $t = Limpar-Linha $l ([ref]$estado)
     if (-not $t) { continue }
     foreach ($r in $regras) {
-      if ([regex]::IsMatch($t, $r[1], 'IgnoreCase')) {
-        $trecho = if ($t.Length -gt 140) { $t.Substring(0, 137) + '...' } else { $t }
+      $opcoes = if ($r.Count -gt 4 -and $r[4] -eq 'cs') { 'None' } else { 'IgnoreCase' }
+      if ([regex]::IsMatch($t, $r[1], $opcoes)) {
+        $original = $l.Trim()
+        $trecho = if ($original.Length -gt 140) { $original.Substring(0, 137) + '...' } else { $original }
         $achados[$r[0]].Add("$rel`:$i  $trecho")
       }
     }

@@ -69,6 +69,11 @@ begin
 
   if TFile.Exists(ReceivedFile) then
     TFile.Delete(ReceivedFile);
+
+  // Registra uma asserção: o projeto de testes liga FailsOnNoAsserts, e um teste que só
+  // chama Verify falharia com "No assertions were made". Não use Assert.Pass aqui: ele
+  // encerra o teste e um segundo Verify no mesmo teste não rodaria.
+  Assert.IsTrue(True, Format('Saída de "%s" igual à aprovada.', [AName]));
 end;
 
 class function TGoldenMaster.DataSetToText(ADataSet: TDataSet): string;

@@ -117,7 +117,8 @@ O `Invoke-ReFind.ps1` corrige os dois numa cópia das regras, sem alterar os arq
 
 ## Status
 Versão inicial (0.1). Os scripts foram revisados, mas ainda não rodaram em muitos projetos
-reais. Depois de clonar, rode `tools\Testar-Sintaxe.ps1` para conferir a sintaxe de todos. Use primeiro numa cópia ou branch, e abra uma *issue* com a saída do console se algo
+reais. Depois de clonar, rode `tools\Testar-Sintaxe.ps1` (sintaxe de todos) e `tools\Testar-Scripts.ps1`
+(executa os scripts contra uma pasta de exemplo). Use primeiro numa cópia ou branch, e abra uma *issue* com a saída do console se algo
 não funcionar.
 
 ## Créditos

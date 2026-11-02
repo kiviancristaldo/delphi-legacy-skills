@@ -14,6 +14,7 @@ uses
   Winapi.Messages,
   System.SysUtils,
   System.Classes,
+  System.UITypes,   // mtConfirmation/mrYes do MessageDlg (sem ela: hint H2443)
   Vcl.Graphics,
   Vcl.Controls,
   Vcl.Forms,

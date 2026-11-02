@@ -100,7 +100,9 @@ foreach ($f in $pas) {
       while ($j -lt $linhas.Count -and $linhas[$j].Trim() -eq '') { $j++ }
       if ($j -lt $linhas.Count -and $linhas[$j].Trim() -match '^end;?$') { $itens['except vazio'].Add("$pos  except ... end") }
     }
-    if ($t -match '^(\w+)\s*:=\s*T\w+\.Create\b' -and $Matches[1] -ne 'Result') {
+    # Objeto com dono (Create(Application/Self/AOwner/Owner)) é liberado pelo dono: não precisa de try/finally
+    if ($t -match '^(\w+)\s*:=\s*T\w+\.Create\b' -and $Matches[1] -ne 'Result' -and
+        $t -notmatch '\.Create\s*\(\s*(Application|Self|AOwner|Owner)\s*[,)]') {
       $j = $i + 1
       while ($j -lt $linhas.Count -and $linhas[$j].Trim() -eq '') { $j++ }
       if ($j -lt $linhas.Count -and $linhas[$j].Trim() -notmatch '^try\b') { $itens['Create sem try/finally'].Add("$pos  $t") }

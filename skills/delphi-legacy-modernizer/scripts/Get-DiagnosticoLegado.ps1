@@ -10,11 +10,12 @@
 
 .EXAMPLE
   # Ignorar componentes de terceiros e comparar com um diagnóstico anterior
-  powershell -ExecutionPolicy Bypass -File Get-DiagnosticoLegado.ps1 -Pasta C:\Projetos\MeuSistema -Recursivo -Excluir 'ACBr|Componentes|Lib' -Comparar _modernizacao\diagnostico-2026-10-01.json
+  powershell -ExecutionPolicy Bypass -File Get-DiagnosticoLegado.ps1 -Pasta C:\Projetos\MeuSistema -Recursivo -Excluir 'ACBr|Componentes|Lib' -Comparar _modernizacao\diagnostico-2026-10-01_143000.json
 
 .OUTPUTS
   <Pasta>\_modernizacao\diagnostico.md   (relatório)
-  <Pasta>\_modernizacao\diagnostico-<data>.json (métricas para comparar antes × depois)
+  <Pasta>\_modernizacao\diagnostico-<data>_<hora>.json (métricas para comparar antes × depois;
+  a hora no nome evita que uma segunda execução no mesmo dia sobrescreva a base)
 
 .NOTES
   Análise por texto (heurística), não por compilador: os números são aproximados e servem
@@ -59,6 +60,13 @@ $totalLinhas = 0; $totalChars = 0
 # Qualquer rotina na coluna 0 da implementation (método ou função solta) abre um bloco novo
 $reMetodo = '^(class\s+)?(procedure|function|constructor|destructor|operator)\s+([A-Za-z_][\w\.]*)'
 $reFimBloco = '^(initialization|finalization|end\.)'
+
+# Última linha do método (1-based): o último "end;" na coluna 0; sem ele, a linha antes do
+# próximo cabeçalho. Assim linhas em branco e comentários do método seguinte não contam.
+function Get-FimMetodo($Metodo, [int]$IndiceProximo) {
+  if ($Metodo.UltimoEnd -gt 0) { return $Metodo.UltimoEnd }
+  return $IndiceProximo
+}
 
 foreach ($f in $pas) {
   $linhas = [IO.File]::ReadAllLines($f.FullName, [Text.Encoding]::Default)
@@ -113,20 +121,22 @@ foreach ($f in $pas) {
     if ($secao -eq 'implementation') {
       if ($l -match $reMetodo -or $l -match $reFimBloco) {
         if ($metodoAtual) {
-          $metodoAtual.Linhas = $i - $metodoAtual.Inicio
+          $metodoAtual.Linhas = (Get-FimMetodo $metodoAtual $i) - $metodoAtual.Inicio + 1
           $metodos.Add($metodoAtual)
           $metodoAtual = $null
         }
         if ($l -match $reMetodo) {
           $metodoAtual = [pscustomobject]@{
             Unit = $nome; Arquivo = (Rel $f.FullName); Nome = $Matches[3]; Inicio = $i + 1; Linhas = 0
-            Evento = ($l -match '\(\s*Sender\s*:\s*TObject')
+            Evento = ($l -match '\(\s*Sender\s*:\s*TObject'); UltimoEnd = 0
           }
         }
       }
+      # "end;" na coluna 0 fecha o método (procedures aninhadas costumam ficar indentadas)
+      elseif ($metodoAtual -and $l -match '^end;') { $metodoAtual.UltimoEnd = $i + 1 }
     }
   }
-  if ($metodoAtual) { $metodoAtual.Linhas = $linhas.Count - $metodoAtual.Inicio; $metodos.Add($metodoAtual) }
+  if ($metodoAtual) { $metodoAtual.Linhas = (Get-FimMetodo $metodoAtual $linhas.Count) - $metodoAtual.Inicio + 1; $metodos.Add($metodoAtual) }
   $unidades[$nome.ToLower()] = $u
 }
 
@@ -134,8 +144,8 @@ foreach ($f in $pas) {
 $forms = New-Object System.Collections.Generic.List[object]
 foreach ($f in $dfm) {
   $fs = [IO.File]::OpenRead($f.FullName)
-  try { $b = New-Object byte[] 4; $n = $fs.Read($b, 0, 4) } finally { $fs.Close() }
-  if ($n -eq 4 -and [Text.Encoding]::ASCII.GetString($b) -eq 'TPF0') {
+  try { $b = New-Object byte[] 64; $n = $fs.Read($b, 0, 64) } finally { $fs.Close() }
+  if ((($n -ge 4 -and [Text.Encoding]::ASCII.GetString($b, 0, 4) -eq 'TPF0') -or ($n -ge 3 -and $b[0] -eq 0xFF -and $b[1] -eq 0x0A -and [Text.Encoding]::ASCII.GetString($b, 0, $n).Contains('TPF0')))) {
     $forms.Add([pscustomobject]@{ Arquivo = (Rel $f.FullName); Componentes = -1; Dados = -1; Binario = $true }); continue
   }
   $comp = 0; $dados = 0
@@ -316,7 +326,7 @@ if ($Comparar) {
 $saida = Join-Path $Pasta '_modernizacao'
 New-Item -ItemType Directory -Path $saida -Force | Out-Null
 $arqMd = Join-Path $saida 'diagnostico.md'
-$arqJson = Join-Path $saida ("diagnostico-{0}.json" -f (Get-Date -Format 'yyyy-MM-dd'))
+$arqJson = Join-Path $saida ("diagnostico-{0}.json" -f (Get-Date -Format 'yyyy-MM-dd_HHmmss'))
 $md | Set-Content -Path $arqMd -Encoding UTF8
 $metricas | ConvertTo-Json | Set-Content -Path $arqJson -Encoding UTF8
 

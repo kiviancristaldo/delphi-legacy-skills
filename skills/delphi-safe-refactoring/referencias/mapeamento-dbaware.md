@@ -93,6 +93,7 @@ Copie dos TFields legados só o que afeta a exibição (`FieldName`, `Size`, `Di
 | DataModule não é mais usado pelo form | remover a unit do DataModule |
 | `TFDMemTable` | `FireDAC.Stan.Intf`, `FireDAC.Stan.Option`, `FireDAC.Stan.Param`, `FireDAC.Stan.Error`, `FireDAC.DatS`, `FireDAC.Phys.Intf`, `FireDAC.DApt.Intf`, `FireDAC.Comp.DataSet`, `FireDAC.Comp.Client` |
 | `TMaskEdit` / `TDateTimePicker` | `Vcl.Mask` / `Vcl.ComCtrls` |
+| `MessageDlg` com `mtConfirmation`/`mrYes` | `System.UITypes` (sem ela o compilador dá o hint H2443) |
 | Camadas | `Types.<Assunto>`, `Models.<Assunto>`, `Controllers.<Assunto>` |
 | Sempre | `Data.DB`, `Vcl.Grids`, `Vcl.DBGrids` |
 
