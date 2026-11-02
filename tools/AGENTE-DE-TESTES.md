@@ -46,7 +46,7 @@ Nos comandos abaixo, `$K` = `C:\TesteSkills\delphi-legacy-skills\skills`.
 |---|---|---|---|
 | 2.1 | Diagnóstico | `powershell -ExecutionPolicy Bypass -File $K\delphi-legacy-modernizer\scripts\Get-DiagnosticoLegado.ps1 -Pasta C:\TesteSkills\MastApp -Recursivo` | gera `_modernizacao\diagnostico.md` e o `.json`; abra 3 itens de "maiores métodos" e 2 blocos duplicados e confira se são verdadeiros |
 | 2.2 | Diagnóstico comparando | mesmo comando com `-Comparar _modernizacao\diagnostico-<data>.json` | aparece a seção "Antes × depois" |
-| 2.3 | Code smells | `...\delphi-cleanup\scripts\Find-CodeSmells.ps1 -Pasta C:\TesteSkills\MastApp -Recursivo` | gera `limpeza.md`; confira 5 itens e anote falsos positivos |
+| 2.3 | Code smells | `...\delphi-cleanup\scripts\Find-CodeSmells.ps1 -Pasta C:\TesteSkills\MastApp -Recursivo`; depois o mesmo com `-Arquivos "DataMod.pas,SrchDlg.pas"` | gera `limpeza.md` agrupado em prioridade alta/média/baixa, com `arquivo:linha`; confira 5 itens (tamanho e complexidade de método, var/out, duplicação, assuntos do `DataMod`) e anote falsos positivos; no escopo parcial, `TSearchDlg.ShowModalCust` aparece em "Não remover: escopo parcial" e não em "Método possivelmente sem uso" |
 | 2.4 | Padrões Unicode | `...\delphi-unicode-migration\scripts\Find-PadroesMigracao.ps1 -Tipo Unicode -Pasta C:\TesteSkills\MastApp -Recursivo` | gera `padroes-Unicode.md` |
 | 2.5 | Padrões Win64 | mesmo script com `-Tipo Win64` | gera `padroes-Win64.md`; deve apontar `DBTables` (BDE) |
 | 2.6 | SQL Firebird | `...\sql-dialect-migration\scripts\Find-SqlFirebird.ps1 -Pasta C:\TesteSkills\MeetingOrganizer -Destino PG -Recursivo` | gera o relatório; rode também com `-Destino MSSQL` |
