@@ -44,7 +44,8 @@ function Conferir([string]$Nome, [bool]$Passou, [string]$Detalhe = '') {
 function Pular([string]$Nome, [string]$Motivo) { Write-Host "PULADO $Nome ($Motivo)" -ForegroundColor Yellow }
 
 function Contagem([string]$Md, [string]$Item) {
-  $linha = Get-Content -Path $Md -Encoding UTF8 | Where-Object { $_ -like "| $Item |*" } | Select-Object -First 1
+  # StartsWith, não -like: nomes como "Char em set (in [...])" têm colchetes, que o -like trata como curinga
+  $linha = Get-Content -Path $Md -Encoding UTF8 | Where-Object { $_.StartsWith("| $Item |") } | Select-Object -First 1
   if (-not $linha) { return -1 }
   return [int](($linha -split '\|')[2].Trim())
 }
@@ -155,6 +156,71 @@ end.
     Conferir 'Find-PadroesMigracao: QuickReport sim, QryCliente não' ((Contagem $md 'Componentes sem versão 64 bits') -eq 2)
     Conferir 'Find-PadroesMigracao: BDE' ((Contagem $md 'BDE (não existe em 64 bits)') -eq 1)
   }
+  # ---------- Find-PadroesMigracao (Unicode) ----------
+  # Pasta própria para não mudar as contagens dos outros scripts. "SIM" deve ser apontado, "NAO" não.
+  Gravar 'Unicode\uLegado.pas' @'
+unit uLegado;
+
+interface
+
+const
+  DLL_TEF = 'tef.dll';
+  Digitos = ['0'..'9'];                                  // SIM: constante de set de Char
+  Separadores: set of AnsiChar = [';', ','];             // NAO: set of AnsiChar é a correção
+
+type
+  TLetras = set of Char;                                 // SIM
+  TFaixa = set of 'a'..'z';                              // SIM: subfaixa de Char
+  TAnsiLetras = set of AnsiChar;                         // NAO
+
+function EnviarTef(Texto: PChar): Integer; stdcall; external DLL_TEF;       // SIM: DLL por constante
+function Imprimir(Texto: PChar): Integer; stdcall; external 'impressora.dll'; // SIM
+
+implementation
+
+procedure Processar(const S: string; Arq: TStream; H: THandle);
+var
+  C: Char;
+  Letras: TLetras;
+  Buffer: array[0..255] of Char;                         // SIM
+  BufferA: array[0..255] of AnsiChar;                    // NAO (buffer Ansi)
+  Utf: string;
+  P: Pointer;
+begin
+  // if C in ['a'..'z'] em comentário: NAO
+  if C in ['a'..'z'] then Exit;                          // SIM
+  if CharInSet(C, ['a'..'z']) then Exit;                 // NAO
+  Letras := ['a', 'b'];                                  // NAO: atribuição (o compilador não avisa)
+  Utf := 'texto com in [''a''] e UTF8Encode( na string'; // NAO
+  Arq.Write(S[1], Length(S));                            // SIM: string como buffer
+  Utf := UTF8Encode(S);                                  // SIM
+  Utf := S + Chr(128);                                   // SIM
+  Utf := S + #128;                                       // SIM
+  Utf := S + Chr(65) + #13#10 + #$20AC;                  // NAO: ASCII ou Unicode explícito
+  GetWindowTextA(0, BufferA, SizeOf(BufferA));           // SIM: API A
+  P := GetProcAddress(H, 'Enviar');                      // SIM
+end;
+
+end.
+'@
+  $r = Rodar 'delphi-unicode-migration\scripts\Find-PadroesMigracao.ps1' @('-Tipo', 'Unicode', '-Pasta', "$tmp\Unicode")
+  $md = "$tmp\Unicode\_modernizacao\padroes-Unicode.md"
+  Conferir 'Find-PadroesMigracao Unicode roda' ($r.Codigo -eq 0 -and (Test-Path $md)) $r.Saida
+  if (Test-Path $md) {
+    foreach ($caso in @(
+        @('Char em set (in [...])', 2),        # in [...] e constante; não CharInSet, := nem set of AnsiChar
+        @('set of Char', 2),                   # set of Char e set of 'a'..'z'; não set of AnsiChar
+        @('Buffer array of Char', 1),
+        @('String como buffer de bytes', 1),   # Stream.Write(S[1], ...)
+        @('UTF-8/ANSI convertido à mão', 1),
+        @('Chr/# entre 128 e 255', 2),         # Chr(128) e #128; não Chr(65), #13#10 nem #$20AC
+        @('API Windows versão A', 1),
+        @('PChar com DLL externa', 3))) {      # external 'x', external CONSTANTE e GetProcAddress
+      $n = Contagem $md $caso[0]
+      Conferir "Find-PadroesMigracao Unicode: $($caso[0]) = $($caso[1])" ($n -eq $caso[1]) "encontrado: $n"
+    }
+  }
+
   $iguais = (Get-FileHash "$K\delphi-64bit-ready\scripts\Find-PadroesMigracao.ps1").Hash -eq (Get-FileHash "$K\delphi-unicode-migration\scripts\Find-PadroesMigracao.ps1").Hash
   Conferir 'Find-PadroesMigracao: cópias unicode e 64 bits idênticas' $iguais
 

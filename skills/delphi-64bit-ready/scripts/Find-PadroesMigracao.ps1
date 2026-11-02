@@ -14,7 +14,7 @@
 
 .NOTES
   Busca por texto: cada ocorrência é um ponto para revisar, não um erro certo.
-  O compilador (warnings W1057, W1058, W1050, W1044...) complementa esta lista.
+  O compilador (warnings W1057, W1058, W1050, W1044, W1062...) complementa esta lista.
 #>
 param(
   [Parameter(Mandatory = $true)] [ValidateSet('Unicode', 'Win64')] [string]$Tipo,
@@ -32,14 +32,19 @@ $recurse = [bool]$Recursivo
 # A busca ignora comentários e o conteúdo de strings.
 $regras = @{
   Unicode = @(
-    @('Char em set (in [...])',            "\bin\s*\[\s*('|#)",                                         'alto',  'CharInSet(C, [...]) ou funções de System.Character (C.IsDigit)'),
-    @('set of Char',                       '\bset\s+of\s+(Ansi)?Char\b',                                'alto',  'set of AnsiChar + CharInSet, ou TSysCharSet'),
+    # Set de Char: "in [...]" e constantes "= [...]" com literal de caractere (não ":=", nem
+    # constante tipada como set of AnsiChar/TSysCharSet, que é a correção)
+    @('Char em set (in [...])',            "(\bin|(?<![:<>]|\b(AnsiChar|TSysCharSet)\s*)=)\s*\[\s*('|#)", 'alto',  'ASCII puro: CharInSet(C, [...]); com caractere > 127 (acento, €): C.IsInArray([...]) ou comparação direta'),
+    @('set of Char',                       "\bset\s+of\s+(Char\b|''|#)",                                'alto',  'set of AnsiChar/TSysCharSet + CharInSet; não guarda caractere acima de 255'),
     @('SizeOf(Char/string) e Move/FillChar','\bSizeOf\s*\(\s*(Char|string)\s*\)|\b(Move|FillChar)\s*\(', 'alto',  'Char tem 2 bytes: use Length(S) * SizeOf(Char) ou ByteLength(S)'),
-    @('String como buffer de bytes',       '\b(BlockRead|BlockWrite|ReadBuffer|WriteBuffer|SendBuf|ReceiveBuf|SendText)\b', 'alto', 'use TBytes/RawByteString e TEncoding explícito'),
+    @('Buffer array of Char',              '\barray\s*\[[^\]]*\]\s*of\s+Char\b',                        'médio', 'SizeOf(Buffer) agora dá o dobro dos caracteres: APIs que pedem nº de caracteres recebem Length(Buffer)'),
+    @('String como buffer de bytes',       '\b(BlockRead|BlockWrite|ReadBuffer|WriteBuffer|SendBuf|ReceiveBuf|SendText)\b|\.(Read|Write)\s*\(\s*\w+\s*\[\s*1\s*\]', 'alto', 'use TBytes/RawByteString e TEncoding explícito'),
+    @('UTF-8/ANSI convertido à mão',       '\b(UTF8Encode|UTF8Decode|AnsiToUtf8|Utf8ToAnsi)\b',          'alto',  'UTF8String virou tipo próprio: guardar o resultado em string desfaz a conversão; use TEncoding.UTF8.GetBytes/GetString'),
+    @('Chr/# entre 128 e 255',             '\bChr\s*\(\s*(12[89]|1[3-9]\d|2[0-4]\d|25[0-5]|\$[89A-F][0-9A-F])\s*\)|#(12[89]|1[3-9]\d|2[0-4]\d|25[0-5])(?!\d)|#\$(00)?[89A-F][0-9A-F](?![0-9A-F])', 'médio', 'Chr(n) é Unicode (Chr(128) = U+0080) e #n segue a codepage do compilador (#128 = €): use o caractere ou #$20AC'),
     @('Hash/criptografia/Base64 de string','\b(MD5|SHA1|SHA256|Crypt|Encrypt|Decrypt|Cripto|Base64|Hash)\w*\s*\(', 'alto', 'o resultado muda se os bytes mudarem: fixe o encoding (UTF-8 ou ANSI) antes de calcular'),
     @('Arquivo texto / integração',        '\b(AssignFile|Rewrite|Append|SaveToFile|LoadFromFile|SaveToStream|LoadFromStream)\b', 'médio', 'defina TEncoding explícito conforme o layout combinado (ANSI ou UTF-8)'),
-    @('API Windows versão A',              '\b(MessageBox|ShellExecute|GetModuleFileName|CreateFile|LoadLibrary|GetProcAddress|FindWindow|SendMessage|WinExec)A\b', 'médio', 'use a versão sem sufixo (string) ou a W; WinExec → CreateProcess/ShellExecute'),
-    @('PChar com DLL externa',             '\bexternal\s+''',                                           'alto',  'DLL espera PAnsiChar? declare PAnsiChar e converta com AnsiString(S)'),
+    @('API Windows versão A',              '\b(MessageBox|ShellExecute|ShellExecuteEx|GetModuleFileName|CreateFile|CreateProcess|LoadLibrary|FindWindow|SendMessage|PostMessage|WinExec|GetWindowText|SetWindowText|RegOpenKeyEx|RegQueryValueEx|RegSetValueEx|GetPrivateProfileString|WritePrivateProfileString|GetTempPath|GetComputerName|GetUserName|CopyFile|MoveFile|DeleteFile|FindFirstFile|OutputDebugString|lstrcpy|lstrlen)A\b', 'médio', 'use a versão sem sufixo (string) ou a W; WinExec → CreateProcess/ShellExecute'),
+    @('PChar com DLL externa',             "\bexternal\s+(''|[A-Za-z_]\w*)|\bGetProcAddress\s*\(",      'alto',  'DLL espera PAnsiChar? declare PAnsiChar (também nos tipos de ponteiro de função) e converta com AnsiString(S)'),
     @('Cast para PAnsiChar / AnsiString',  '\b(PAnsiChar|AnsiString|AnsiChar)\b',                       'médio', 'confirme se Ansi é necessário (DLL, arquivo, protocolo); senão use string/Char'),
     @('StrPCopy/StrCopy/StrLCopy',         '\b(StrPCopy|StrCopy|StrLCopy|StrPLCopy)\b',                 'médio', 'tamanho do buffer em Chars, não em bytes'),
     @('Byte de string (Ord > 255)',        '\bOrd\s*\(\s*\w+\s*\[',                                      'baixo', 'Ord(S[i]) pode passar de 255 agora'),
