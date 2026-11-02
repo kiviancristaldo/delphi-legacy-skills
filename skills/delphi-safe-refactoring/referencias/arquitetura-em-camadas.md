@@ -106,6 +106,41 @@ para tipos (número, data); mantém layout e comportamento. Detalhes em
 | Firebird 3+ (identity) / PostgreSQL | `INSERT ... RETURNING ID` aberto com `TFDQuery.Open` e lido em `FieldByName('ID')` |
 | SQL Server / SQLite / MySQL (autoincremento) | `INSERT` e depois `Conexao.GetLastAutoGenValue('')` |
 
+### Legado com `max(id)+1` e banco sem generator
+É **pergunta** no B2 (exige mudar o banco). Opções:
+1. **Criar um generator** (recomendado): resolve a colisão entre dois usuários.
+2. **Manter `max(id)+1`**: comportamento igual, com o risco registrado no relatório. Se mantiver, leia
+   o próximo id e faça o `INSERT` na **mesma conexão e transação**; com dois usuários ao mesmo tempo, o
+   segundo ainda falha na chave primária, e a mensagem precisa ser clara.
+
+Ao criar o generator:
+- Escreva um script **idempotente** no lugar onde o projeto guarda mudanças de banco (ex.:
+  `sql\NNN_gen_<tabela>_id.sql`, ou o mecanismo de migração que o projeto já tiver). Ele cria o generator
+  só se não existir e o acerta para o maior id atual. Aplique no banco de **cópia** para os testes; no
+  banco real, quem aplica é o usuário. Exemplo Firebird:
+  ```sql
+  SET TERM ^ ;
+  EXECUTE BLOCK AS
+    DECLARE VARIABLE LMaiorId INTEGER;
+    DECLARE VARIABLE LAtual BIGINT;
+  BEGIN
+    IF (NOT EXISTS(SELECT 1 FROM RDB$GENERATORS WHERE RDB$GENERATOR_NAME = 'GEN_X_ID')) THEN
+      EXECUTE STATEMENT 'CREATE SEQUENCE GEN_X_ID';
+    SELECT COALESCE(MAX(ID), 0) FROM X INTO :LMaiorId;
+    -- GEN_ID direto no bloco não compila se o generator ainda não existe: use EXECUTE STATEMENT
+    EXECUTE STATEMENT 'SELECT GEN_ID(GEN_X_ID, 0) FROM RDB$DATABASE' INTO :LAtual;
+    IF (LAtual < LMaiorId) THEN
+      EXECUTE STATEMENT 'SET GENERATOR GEN_X_ID TO ' || LMaiorId;
+  END^
+  SET TERM ; ^
+  ```
+- **Outras telas que ainda inserem na mesma tabela com `max(id)+1`** (busque no projeto inteiro, inclusive
+  no `AfterInsert`/`OnNewRecord` do DataModule): misturar os dois jeitos gera id repetido, porque o
+  generator não acompanha os ids criados por `max+1`. Pergunte se essas telas passam a usar o generator
+  (mudança pequena, com teste) ou confirme que nenhuma outra tela insere na tabela.
+- Registre a diferença: com a tabela vazia, `max(id)+1` dá `NULL` (que vira id 0 no `AsInteger`); o
+  generator dá 1.
+
 ## Variação: separar a persistência (DAO/Repository)
 Quando a coleção do Model passar de ~300 linhas ou quando o time quiser testar regras sem
 banco, separe a persistência numa unit `DAO.<Assunto>` (ou `Repositories.<Assunto>`) atrás de

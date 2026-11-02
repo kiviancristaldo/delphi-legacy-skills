@@ -23,6 +23,22 @@
     `end;` e grava o JSON com data e hora; o inventário DBX conta `TSQLTimeStampField`; o resumo do
     `git diff --stat` do `Invoke-ReFind` não corta mais arquivos.
 - `tools/Testar-Scripts.ps1`: smoke test que executa os scripts contra uma pasta de exemplo gerada na hora.
+- Correções do teste da etapa 5 por um agente independente:
+  - Política de git única: árvore limpa no início da tarefa; alterações da própria tarefa são esperadas
+    quando uma skill chama outra no meio (`delphi-compile-loop`, `delphi-characterization-tests`);
+    commits propostos e feitos só com autorização, pedida uma vez no B0.
+  - `delphi-safe-refactoring`: nova etapa B1.5 (rede de segurança entre o levantamento e o plano, em nível
+    que sobrevive à troca da tela); o plano passa a perguntar sobre comportamentos do DB-aware e o efeito em
+    outras telas que usam as mesmas queries; o compile-loop chamado no B8 não refaz as perguntas.
+  - `mapeamento-dbaware.md`: gravação automática ao trocar de linha, `AutoEdit`, edição no grid, Esc,
+    `IsValidChar`, estado e confirmação do navegador, com o que perguntar ao usuário.
+  - `arquitetura-em-camadas.md`: o que fazer quando o legado usa `max(id)+1` e o banco não tem generator
+    (script idempotente, outras telas que inserem na mesma tabela, tabela vazia).
+  - Servidor Horse: modelo `ServerProdutos.dproj.modelo` com o search path dos pacotes do Boss 3.x;
+    corpo de erro `{"error": ...}` igual ao do HandleException; ordem `Jhonson` antes do `HandleException`
+    documentada e testada (na ordem inversa o 500 sai em HTML); `Listen` com callback, acentos e `Flush`
+    no console; aviso sobre a mensagem interna do banco no 500; nomes do kit × nomes da documentação do Horse.
+  - Roteiro do agente de testes: paradas esperadas no `unCategoria` (não é um caso simples) e checagem do 500.
 
 ## 0.1.0 (novembro de 2026)
 Versão inicial, apresentada no Dia do ACBr 2026.

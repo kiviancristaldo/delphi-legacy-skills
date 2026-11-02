@@ -1,0 +1,39 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <!-- Projeto MSBuild mínimo do servidor Horse (gerado a partir de ServerProdutos.dproj.modelo).
+         Troque ServerProdutos pelo nome do seu servidor e o marcador GUID por um GUID novo
+         ([guid]::NewGuid() no PowerShell). O search path aponta para onde o Boss 3.x instala os
+         fontes (modules\github_com_hashload_<pacote>\src, na pasta do servidor): não dependa do Boss
+         para atualizar o .dproj. As units das camadas entram pelo "in '..\src\...'" do .dpr. -->
+    <PropertyGroup>
+        <ProjectGuid>{{GUID}}</ProjectGuid>
+        <MainSource>ServerProdutos.dpr</MainSource>
+        <Base>True</Base>
+        <Config Condition="'$(Config)'==''">Debug</Config>
+        <Platform Condition="'$(Platform)'==''">Win32</Platform>
+        <TargetedPlatforms>3</TargetedPlatforms>
+        <AppType>Console</AppType>
+        <FrameworkType>None</FrameworkType>
+        <ProjectVersion>20.3</ProjectVersion>
+    </PropertyGroup>
+    <PropertyGroup>
+        <DCC_ExeOutput>.\$(Platform)\$(Config)</DCC_ExeOutput>
+        <DCC_DcuOutput>.\$(Platform)\$(Config)\dcu</DCC_DcuOutput>
+        <DCC_Namespace>System;Xml;Data;Datasnap;Web;Soap;Winapi;System.Win;FireDAC;$(DCC_Namespace)</DCC_Namespace>
+        <DCC_UnitSearchPath>modules\github_com_hashload_horse\src;modules\github_com_hashload_jhonson\src;modules\github_com_hashload_handle-exception\src;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
+        <DCC_Define>DEBUG;$(DCC_Define)</DCC_Define>
+        <DCC_DebugInformation>2</DCC_DebugInformation>
+    </PropertyGroup>
+    <ItemGroup>
+        <DelphiCompile Include="$(MainSource)">
+            <MainSource>MainSource</MainSource>
+        </DelphiCompile>
+        <BuildConfiguration Include="Base">
+            <Key>Base</Key>
+        </BuildConfiguration>
+        <BuildConfiguration Include="Debug">
+            <Key>Cfg_2</Key>
+            <CfgParent>Base</CfgParent>
+        </BuildConfiguration>
+    </ItemGroup>
+    <Import Project="$(BDS)\Bin\CodeGear.Delphi.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Delphi.Targets')"/>
+</Project>

@@ -33,7 +33,7 @@ var
   Json: TJSONObject;
 begin
   Json := TJSONObject.Create;
-  Json.AddPair('erro', AMensagem);
+  Json.AddPair('error', AMensagem);   // mesma chave do HandleException (erros 500)
   Res.Send<TJSONObject>(Json).Status(AStatus);
 end;
 
