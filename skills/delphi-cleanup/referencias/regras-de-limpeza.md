@@ -96,9 +96,19 @@ Para cada identificador dentro do bloco, decida: é membro do objeto do `with` o
 Na dúvida, confira a declaração da classe. `with A, B do` é o caso mais perigoso: trate com testes.
 
 ## 6. Retire o código que não está sendo usado (risco baixo a médio)
+**Em escopo parcial (só algumas units), não remova nada que possa ser usado fora delas**:
+métodos, componentes, units, tipos, constantes. O script já marca esses itens como
+"Não remover: escopo parcial". Remover só depois de buscar no sistema inteiro e com a
+decisão do usuário.
+
 - Código comentado: apague (o Git guarda).
-- Métodos sem uso: o script lista candidatos. Antes de apagar, confirme que não são eventos
-  ligados no DFM, sobrescritos (`override`), publicados para RTTI ou chamados de outro projeto/pacote.
+- Métodos sem uso: o script lista candidatos (ignora os ligados em DFM ou atribuídos em código
+  a `OnXxx :=`, e os `virtual`/`override`/`dynamic`/`abstract`/`message`). Antes de apagar,
+  confirme que não são eventos ligados num DFM herdado ou binário, publicados para RTTI
+  (`published`, `MethodAddress`) ou chamados de outro projeto/pacote.
+- Componentes de dados sem uso: o script lista datasets e DataSources cujo nome só aparece no
+  `.dfm` e na declaração. Confirme que nenhum outro form usa `DM.Componente`, que não há
+  `FindComponent` e que nenhum relatório (`.fr3`, `.rav`) usa o dataset.
 - Queries e componentes sem uso no DFM: confirme no código (`FieldByName`, `.Open`) antes de remover.
 - Units no `uses` sem uso: ferramentas como o CnPack (Uses Cleaner) ou o MMX ajudam. Sem elas,
   remova uma unit, compile e, se der erro, volte.
@@ -123,5 +133,10 @@ processo, usar `TTask`/thread para o trabalho pesado, ou manter com uma proteç�
   (`btnSalvar`, `qryClientes`, não `Button1`, `Query3`). Use a skill `delphi-coding-standards`.
 - **Repense os componentes**: retire os que não são mais usados e avalie substitutos mantidos
   para os que estão abandonados.
-- **Código duplicado**: anote os blocos repetidos (o diagnóstico mostra) para a skill
-  `delphi-safe-refactoring`. Unificar duplicação é refatoração, não limpeza.
+- **Código duplicado**: anote os blocos repetidos (o levantamento e o diagnóstico mostram) para a
+  skill `delphi-safe-refactoring`. Unificar duplicação é refatoração, não limpeza.
+
+## 11. Riscos apontados (não são limpeza)
+Unit ou DataModule grande, unit com muitas classes, método grande ou complexo, DataModule com
+muitos assuntos, parâmetros `var`/`out` e código duplicado: a skill aponta, com prioridade e
+recomendação, e não corrige. Como cada um é medido: [riscos-apontados.md](riscos-apontados.md).

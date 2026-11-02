@@ -27,7 +27,7 @@ Organizadas nas etapas da reforma: **Diagnostique → Proteja → Limpe → Orga
 |---|---|---|
 | Diagnostique | [`delphi-legacy-modernizer`](skills/delphi-legacy-modernizer) | Mede o legado (units e DataModules gigantes, duplicação, acoplamento, tokens), registra riscos e monta o plano por fases. **Comece por aqui.** |
 | Proteja | [`delphi-characterization-tests`](skills/delphi-characterization-tests) | Testes de caracterização (golden master) com DUnitX: a rede de segurança antes de mexer |
-| Limpe | [`delphi-cleanup`](skills/delphi-cleanup) | `with`, `except` vazio, vazamentos, código comentado e sem uso, senhas no código |
+| Limpe | [`delphi-cleanup`](skills/delphi-cleanup) | Levanta, prioriza (alta/média/baixa) e só faz o que você escolher: `with`, `except` vazio, vazamentos, código comentado e sem uso, senhas no código; aponta riscos (métodos complexos, DataModules com muitos assuntos, var/out, duplicação) |
 | Organize | [`delphi-coding-standards`](skills/delphi-coding-standards) | Modelo do padrão de código do time, para a IA escrever e revisar do seu jeito |
 | Refatore | [`delphi-safe-refactoring`](skills/delphi-safe-refactoring) | Transforma telas RAD (DataModule + DB-aware) em camadas Types/Connection/Models/Controllers/View com endpoints Horse; quebra métodos, units e DataModules, elimina duplicação e acoplamento |
 | Modernize: versão | [`delphi-unicode-migration`](skills/delphi-unicode-migration) | Delphi 2007 ou anterior → Unicode |

@@ -39,7 +39,7 @@ Cada script roda sozinho. Confira se termina sem erro e se o relatório faz sent
 |---|---|---|---|
 | 1 | Diagnóstico | `...\delphi-legacy-modernizer\scripts\Get-DiagnosticoLegado.ps1 -Pasta . -Recursivo` | units e linhas batem com o explorador de arquivos; maiores métodos são mesmo os maiores; blocos duplicados são de fato iguais |
 | 2 | Diagnóstico (comparar) | rodar de novo com `-Comparar _modernizacao\diagnostico-<data>.json` | aparece a tabela "Antes × depois" |
-| 3 | Code smells | `...\delphi-cleanup\scripts\Find-CodeSmells.ps1 -Pasta . -Recursivo` | abrir 5 itens de cada tipo e ver se são verdadeiros; anotar os falsos positivos |
+| 3 | Code smells | `...\delphi-cleanup\scripts\Find-CodeSmells.ps1 -Pasta . -Recursivo` e depois com `-Arquivos "DataMod.pas,Main.pas"` | relatório agrupado em alta/média/baixa; abrir 5 itens de cada tipo (tamanho de método, complexidade, var/out, duplicação, assuntos do DataModule) e ver se são verdadeiros; no escopo parcial, nada de "sem uso" fora de "Não remover"; anotar os falsos positivos |
 | 4 | Padrões Unicode | `...\delphi-unicode-migration\scripts\Find-PadroesMigracao.ps1 -Tipo Unicode -Pasta . -Recursivo` | idem |
 | 5 | Padrões Win64 | mesmo script com `-Tipo Win64` | idem |
 | 6 | Inventário BDE | `...\bde-to-firedac\scripts\Get-InventarioAcessoDados.ps1 -Origem BDE -Pasta .` | contagem de TTable/TQuery bate com o MastApp |
@@ -60,7 +60,7 @@ Conferir (1) se a skill certa foi acionada, (2) se seguiu o processo, (3) se par
 |---|---|---|---|
 | 1 | delphi-legacy-modernizer | "Por onde eu começo a modernizar este sistema?" | roda o diagnóstico, faz perguntas de contexto, monta o registro de riscos, sugere o plano |
 | 2 | delphi-characterization-tests | "Crie testes para o cálculo do botão X antes de eu mexer nele" | cria projeto DUnitX, registra o comportamento atual, faz o "teste dos testes" |
-| 3 | delphi-cleanup | "Limpa essa unit pra mim" | roda o script, ataca risco baixo primeiro, um commit por tipo, pergunta antes de mexer em `except` vazio |
+| 3 | delphi-cleanup | "Limpa essa unit pra mim" | roda o script com `-Arquivos` (escopo parcial), recomenda `delphi-characterization-tests` antes, mostra a lista alta/média/baixa e **espera a escolha**; executa só o escolhido, um commit por tipo; não remove nada que possa ser usado fora da unit; relatório com "não feito, por decisão do usuário" |
 | 4 | delphi-coding-standards | "Revise esta unit" | aponta desvios no formato arquivo:linha + regra + correção |
 | 5 | delphi-safe-refactoring | "Tira a regra de negócio desse OnClick" | **recusa sem testes** ou cria os testes antes; passos pequenos com compilação entre eles |
 | 6 | delphi-unicode-migration | "Vou migrar este projeto do Delphi 7" | pede o golden master dos arquivos gerados antes de mexer |

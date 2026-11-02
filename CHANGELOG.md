@@ -1,6 +1,27 @@
 # Histórico de versões
 
 ## Não lançado
+- `delphi-cleanup`: processo novo, sem sair fazendo: levantamento → recomendação de testes de
+  caracterização (registra se o usuário aceitou) → lista priorizada (alta, média, baixa, com risco
+  de corrigir, benefício e recomendação) → decisão do usuário, uma pergunta por vez → execução só do
+  escolhido, um tipo por commit → relatório com o que "não foi feito, por decisão do usuário".
+  - `Find-CodeSmells.ps1` passa a apontar riscos (não corrige): units e DataModules grandes
+    (linhas, componentes e componentes de dados do `.dfm`), units com muitas classes, métodos grandes
+    ou com complexidade ciclomática alta, DataModules com muitos assuntos (grupos de datasets ligados
+    por tabela, mestre-detalhe, DataSource ou Provider, inclusive com DFM herdado), parâmetros
+    `var`/`out` (eventos da VCL à parte) e código duplicado (janelas juntadas num bloco só).
+    Limites são parâmetros, com os mesmos padrões do `Get-DiagnosticoLegado`.
+  - Relatório `_modernizacao\limpeza.md` agrupado por prioridade, com códigos (A1, M2, B1...) e
+    `arquivo:linha` em cada item; a tabela-resumo mantém as colunas `Item | Quantidade`.
+  - `-Arquivos "a.pas,b.pas"` (escopo parcial): analisa só essas units, procura referências no
+    projeto inteiro e marca métodos e componentes sem uso como "Não remover: escopo parcial".
+  - Ignora comentários e strings (função `Limpar-Linha` do `Find-PadroesMigracao`); DFM binário
+    não é lido e gera aviso; novo item "Componente de dados possivelmente sem uso"; métodos
+    `virtual`/`override` e eventos atribuídos em código (`OnXxx := Metodo`) deixam de aparecer como
+    sem uso; `'Password: ' + Campo` (mensagem) deixa de ser acusado como senha.
+  - Referências novas: `riscos-apontados.md` (heurísticas e limites) e `modelo-relatorio.md`.
+- `tools/Testar-Scripts.ps1`: verificações das métricas novas do `Find-CodeSmells` (classes,
+  complexidade, var/out, duplicação, assuntos do DataModule, prioridade e escopo parcial).
 - `delphi-safe-refactoring`: novo modo de transformação em camadas (Types, Connection, Models,
   Controllers, View) com endpoints Horse, baseado no curso de Delphi da Kivian e inspirado na
   c4d-rad-to-poo; modelos de um cadastro completo; scripts de codificação, validação de .dfm e

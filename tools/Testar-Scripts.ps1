@@ -166,6 +166,223 @@ end.
     Conferir 'Find-CodeSmells: Create(Application) não conta, Create sem dono conta' ((Contagem $md 'Create sem try/finally') -eq 1)
   }
 
+  # ---------- Find-CodeSmells: riscos priorizados (pasta própria, para não mexer nas contagens acima) ----------
+  # uRegras: 7 classes (forward e "class of" não contam), Classificar com complexidade 14,
+  # var/out (Trocar tem 4 parâmetros var/out), evento com var Key e um método sem uso
+  Gravar 'Limpeza\uRegras.pas' @'
+unit uRegras;
+
+interface
+
+uses
+  System.SysUtils, System.Classes, Vcl.Forms;
+
+type
+  TRegra2 = class;
+  TClasseRegra = class of TRegra2;
+
+  TRegra1 = class
+  public
+    function Classificar(AValor: Integer; var AMsg: string; out ACodigo: Integer): Integer;
+    procedure NaoUsado;
+  end;
+
+  TRegra2 = class(TRegra1)
+  end;
+
+  TRegra3 = class(TObject);
+  TRegra4 = class(TRegra1);
+  TRegra5 = class(TRegra1);
+  TRegra6 = class(TRegra1);
+
+  TfrmRegras = class(TForm)
+    procedure FormKeyPress(Sender: TObject; var Key: Char);
+  end;
+
+procedure Trocar(var A, B: Integer; var C: string; out D: Integer);
+
+implementation
+
+{ Complexidade esperada: 1 + if + and + if + 3 rótulos de case + for + while + or + repeat + or
+  + except + on = 14. Comentários, strings e a diretiva {$IFDEF} não contam. }
+function TRegra1.Classificar(AValor: Integer; var AMsg: string; out ACodigo: Integer): Integer;
+var
+  I: Integer;
+begin
+  Result := 0;
+  if (AValor > 10) and (AValor < 20) then
+    Result := 1
+  else if AValor > 100 then
+    Result := 2;
+  case AValor of
+    1: AMsg := 'um: if';
+    2, 3: AMsg := 'dois or tres';
+    4..9:
+      begin
+        AMsg := 'faixa';
+      end;
+  else
+    AMsg := 'outro';
+  end;
+  for I := 0 to 3 do
+    Inc(Result);
+  while (Result > 50) or (AValor < 0) do
+    Dec(Result);
+  repeat
+    Inc(Result);
+  until (Result > 5) or (AValor = 0);
+  { if comentado não conta; while também não }
+  // for comentado não conta
+  (* case comentado *)
+  try
+    ACodigo := AValor div Result;
+  except
+    on E: EDivByZero do
+      ACodigo := -1;
+  end;
+  {$IFDEF DEBUG}
+  ACodigo := ACodigo + 0;
+  {$ENDIF}
+end;
+
+procedure TRegra1.NaoUsado;
+begin
+end;
+
+procedure TfrmRegras.FormKeyPress(Sender: TObject; var Key: Char);
+begin
+  Key := #0;
+end;
+
+procedure Trocar(var A, B: Integer; var C: string; out D: Integer);
+begin
+  TRegra1(nil).Classificar(A, C, D);
+  B := A;
+end;
+
+end.
+'@
+  Gravar 'Limpeza\uRegras.dfm' @'
+object frmRegras: TfrmRegras
+  OnKeyPress = FormKeyPress
+end
+'@
+  # Bloco de 11 linhas igual em duas units
+  foreach ($sufixo in 'A', 'B') {
+    Gravar "Limpeza\uCopia$sufixo.pas" @"
+unit uCopia$sufixo;
+
+interface
+
+function Somar$sufixo(AValor, ATaxa: Double): Double;
+
+implementation
+
+function Somar$sufixo(AValor, ATaxa: Double): Double;
+var
+  LBase, LDesconto, LFrete: Double;
+begin
+  LBase := AValor * 1.1;
+  LDesconto := LBase * 0.05;
+  LFrete := 12.5;
+  if LBase > 1000 then
+    LFrete := 0;
+  LBase := LBase - LDesconto + LFrete;
+  LBase := LBase + (LBase * ATaxa / 100);
+  LBase := Round(LBase * 100) / 100;
+  Result := LBase;
+end;
+
+end.
+"@
+  }
+  # DataModule com 4 assuntos e 7 tabelas: Clientes/Endereços/Produtos (ligados por DataSource e
+  # MasterSource), Notas, Estoque e Contas/Caixa (SQL montado no .pas). EXTRACT(YEAR FROM DATA) não é tabela.
+  Gravar 'Limpeza\uDM.pas' @'
+unit uDM;
+
+interface
+
+uses
+  System.Classes, Data.DB, FireDAC.Comp.Client;
+
+type
+  TdmGeral = class(TDataModule)
+    qryClientes: TFDQuery;
+    dsClientes: TDataSource;
+    qryProdutos: TFDQuery;
+    qryNotas: TFDQuery;
+    tblEstoque: TFDTable;
+    qryContas: TFDQuery;
+    procedure CarregarCaixa;
+  end;
+
+var
+  dmGeral: TdmGeral;
+
+implementation
+
+{$R *.dfm}
+
+procedure TdmGeral.CarregarCaixa;
+begin
+  qryContas.SQL.Text := 'select * from CAIXA where DATA = :DATA';
+end;
+
+end.
+'@
+  Gravar 'Limpeza\uDM.dfm' @'
+object dmGeral: TdmGeral
+  Height = 300
+  Width = 400
+  object qryClientes: TFDQuery
+    SQL.Strings = (
+      'select c.*, e.CIDADE'
+      'from CLIENTES c'
+      'join ENDERECOS e on e.ID = c.ID_ENDERECO')
+  end
+  object dsClientes: TDataSource
+    DataSet = qryClientes
+  end
+  object qryProdutos: TFDQuery
+    MasterSource = dsClientes
+    SQL.Strings = (
+      'select * from PRODUTOS where extract(year from DATA) = 2026')
+  end
+  object qryNotas: TFDQuery
+    SQL.Strings = (
+      'select * from NOTAS')
+  end
+  object tblEstoque: TFDTable
+    TableName = 'ESTOQUE'
+  end
+  object qryContas: TFDQuery
+    SQL.Strings = (
+      'select * from CONTAS')
+  end
+end
+'@
+  $r = Rodar 'delphi-cleanup\scripts\Find-CodeSmells.ps1' @('-Pasta', "$tmp\Limpeza")
+  $md = "$tmp\Limpeza\_modernizacao\limpeza.md"
+  Conferir 'Find-CodeSmells (riscos) roda' ($r.Codigo -eq 0 -and (Test-Path $md)) $r.Saida
+  if (Test-Path $md) {
+    $texto = Get-Content $md -Encoding UTF8 -Raw
+    Conferir 'Find-CodeSmells: unit com muitas classes (7; forward e class of não contam)' ((Contagem $md 'Unit com muitas classes') -eq 1 -and $texto -match 'uRegras\.pas:\d+  7 classes')
+    Conferir 'Find-CodeSmells: complexidade ciclomática de Classificar = 14' ($texto -match 'uRegras\.pas:\d+  TRegra1\.Classificar: \d+ linhas, complexidade 14\b') (($texto -split "`n" | Where-Object { $_ -match 'Classificar' }) -join ' / ')
+    Conferir 'Find-CodeSmells: var/out (1 comum, 1 rotina com 4, 1 evento; var local não conta)' ((Contagem $md 'Parâmetro var/out') -eq 1 -and (Contagem $md 'Rotina com muitos var/out') -eq 1 -and (Contagem $md 'Parâmetro var/out em evento') -eq 1)
+    Conferir 'Find-CodeSmells: bloco duplicado em duas units, janelas juntadas num bloco só' ((Contagem $md 'Código duplicado') -eq 1 -and $texto -match '2 ocorrências de ~11 linhas')
+    Conferir 'Find-CodeSmells: DataModule com 4 assuntos e 7 tabelas' ((Contagem $md 'DataModule com muitos assuntos') -eq 1 -and $texto -match 'TdmGeral: 4 assuntos, 7 tabelas') (($texto -split "`n" | Where-Object { $_ -match 'assuntos,' }) -join ' / ')
+    Conferir 'Find-CodeSmells: método e componentes sem uso no projeto todo' ((Contagem $md 'Método possivelmente sem uso') -eq 2 -and (Contagem $md 'Componente de dados possivelmente sem uso') -eq 3)
+    $pa = $texto.IndexOf('## Prioridade alta'); $pm = $texto.IndexOf('## Prioridade média'); $pb = $texto.IndexOf('## Prioridade baixa')
+    Conferir 'Find-CodeSmells: relatório agrupado por prioridade (alta, média, baixa)' ($pa -ge 0 -and $pa -lt $pm -and $pm -lt $pb)
+  }
+  # Escopo parcial: só uRegras.pas; referências no projeto inteiro; nada é sugerido para remoção
+  $r = Rodar 'delphi-cleanup\scripts\Find-CodeSmells.ps1' @('-Pasta', "$tmp\Limpeza", '-Arquivos', 'uRegras.pas')
+  Conferir 'Find-CodeSmells -Arquivos roda' ($r.Codigo -eq 0 -and (Test-Path $md)) $r.Saida
+  if (Test-Path $md) {
+    Conferir 'Find-CodeSmells -Arquivos: sem uso vira "não remover", outras units ficam de fora' ((Contagem $md 'Método possivelmente sem uso') -eq 0 -and (Contagem $md 'Não remover: escopo parcial') -eq 1 -and (Contagem $md 'Código duplicado') -eq 0 -and (Contagem $md 'DataModule com muitos assuntos') -eq 0 -and (Contagem $md 'Unit com muitas classes') -eq 1)
+  }
+
   # ---------- Get-DiagnosticoLegado ----------
   $r = Rodar 'delphi-legacy-modernizer\scripts\Get-DiagnosticoLegado.ps1' @('-Pasta', "$tmp\App", '-Recursivo')
   $md = "$tmp\App\_modernizacao\diagnostico.md"
