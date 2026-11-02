@@ -14,11 +14,17 @@ Arquivos desta skill (caminhos relativos à pasta da skill):
 - `referencias/politica-de-correcao.md`: o que pode e o que não pode ser feito para silenciar o compilador
 
 ## Antes de começar
-1. Projeto no Git, com tudo commitado. Se não estiver, PARE e avise.
+1. Projeto no Git. Se esta skill **abre** o trabalho e há alterações não commitadas, PARE e avise
+   (sem ponto de volta, não dá para separar o que o ciclo mudou).
+   **Chamada por outra skill no meio de uma tarefa** (ex.: `delphi-safe-refactoring` B8, migração
+   para FireDAC): as alterações da própria tarefa são esperadas; siga. Pare só se houver alterações
+   que não são da tarefa.
 2. Descubra o `.dproj`. Se houver mais de um (ou um `.groupproj`), pergunte qual.
 3. Pergunte a meta, se o usuário não disse: **só zerar erros**, ou também **warnings**, ou **tudo
    (incluindo hints)**. Padrão: zerar erros e warnings.
 4. Configuração e plataforma: padrão `Debug`/`Win32`. Pergunte se é `Win64` (muda os warnings).
+   Quando outra skill chama esta, use a meta e a plataforma que ela definiu (ou o padrão) sem
+   perguntar de novo; mostre no resumo qual foi usada.
 5. Leia [referencias/politica-de-correcao.md](referencias/politica-de-correcao.md). Ela vale durante toda a skill.
 
 ## O ciclo
@@ -64,6 +70,8 @@ Pare e pergunte ao usuário quando:
 ### Commits
 Sugira um commit ao fim de cada fase: `fix: projeto compila no Delphi 13`,
 `fix: zera warnings de conversão de string`, `chore: remove hints`.
+Commite só com autorização do usuário (dada uma vez para a tarefa vale até o fim dela). Quando
+chamada por outra skill, quem decide os commits é a skill que chamou.
 
 ## Depois de compilar
 Se existirem testes (skill `delphi-characterization-tests`), rode-os. Compilar não prova que

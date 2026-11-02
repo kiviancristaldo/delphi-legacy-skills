@@ -69,13 +69,24 @@ Copie dos TFields legados só o que afeta a exibição (`FieldName`, `Size`, `Di
 `Origin` nem `ProviderFlags`. As `Columns` do grid precisam apontar para campos que existem no MemTable.
 
 ## Comportamentos que o DB-aware dava de graça
-| Legado (automático) | Agora (código) |
-|---|---|
-| Rolar o grid atualizava os TDBEdit | `DS_<Assunto>.OnDataChange` com `Field = nil` chama `CarregarRegistroSelecionado` |
-| `Append`/`Edit`/`Post`/`Cancel` | flags `FIncluindo` e `FIdAtual` + chamadas ao Controller (veja `View.Produtos.pas.modelo`) |
-| Grid continuava no mesmo registro depois de gravar | guardar o id e usar `Locate` depois de `AtualizarView` |
-| `Required` do TField barrava o Post | `ValidarPreenchimento` no Controller |
-| Botões habilitados conforme o estado do dataset | método de estado da tela (mantenha o nome que o legado usava) |
+Levante quais destes o form legado tinha (B1). Os marcados com **Pergunte** mudam o jeito de usar a
+tela: cada um é uma pergunta no B2, com a recomendação. Os demais você reimplementa e registra no plano.
+
+| Legado (automático) | Agora (código) | Pergunte? |
+|---|---|---|
+| Rolar o grid atualizava os TDBEdit | `DS_<Assunto>.OnDataChange` com `Field = nil` chama `CarregarRegistroSelecionado` | não |
+| `Append`/`Edit`/`Post`/`Cancel` | flags `FIncluindo` e `FIdAtual` + chamadas ao Controller (veja `View.Produtos.pas.modelo`) | não |
+| Grid continuava no mesmo registro depois de gravar | guardar o id e usar `Locate` depois de `AtualizarView` | não |
+| `Required` do TField barrava o Post | `ValidarPreenchimento` no Controller | não |
+| `MaxLength` do TDBEdit vinha do `Size` do TField | `MaxLength` no `TEdit` (e a regra de tamanho no Controller, para a API) | não |
+| `AutoEdit`: digitar num TDBEdit punha o dataset em edição sozinho | campos sempre editáveis; marque a tela como alterada (`FAlterado := True`) no `OnChange` dos campos | não |
+| **Trocar de linha no grid (ou clicar em Novo/Atualizar) com edição pendente gravava sozinho** (`CheckBrowseMode` → `Post`) | no `OnDataChange`, antes de carregar outro registro, se `FAlterado`: gravar, descartar ou perguntar ao usuário da tela | **Pergunte**. Recomendação: perguntar na tela ("Gravar as alterações?"), que é o mais seguro; gravar sozinho reproduz o legado |
+| **Edição direto no grid** (`dgEditing` nas `Options`, ligado por padrão, com dataset editável) | grid somente leitura (`dgEditing` fora ou `ReadOnly = True`); edição só nos campos | **Pergunte** se o legado deixava editar no grid. Recomendação: só leitura |
+| **Esc num TDBEdit restaurava o valor do campo** (e Esc no grid cancelava a edição) | `OnKeyDown` com `VK_ESCAPE` → `CarregarRegistroSelecionado` (ou restaurar só o campo) | **Pergunte**. Recomendação: Esc restaura o registro |
+| Caracteres aceitos pelo TField (`IsValidChar`: `TIntegerField` só aceita dígitos e sinal) | `NumbersOnly` no `TEdit` (não aceita sinal) ou filtro no `OnKeyPress`; conversão com `TryStrToInt` e erro claro | não |
+| Botões do `TDBNavigator` habilitados conforme o estado (vazio, BOF/EOF, editando) | método de estado da tela chamado no `OnDataChange` e depois de cada ação (mantenha o nome que o legado usava) | não |
+| `TDBNavigator.ConfirmDelete` (padrão `True`: "Delete record?") | `MessageDlg` antes de `Excluir`, só se o legado confirmava | não |
+| Glifos do navegador | botões com texto (ou os mesmos ícones num `TImageList`) | **Pergunte** se a aparência importa para o usuário |
 
 ## Nulos e datas como parâmetro (FireDAC)
 - Parâmetro com valor `Null` sem tipo definido falha em execução. Quando a coluna aceita nulo,

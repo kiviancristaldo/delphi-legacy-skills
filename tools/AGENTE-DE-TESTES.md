@@ -114,13 +114,13 @@ copiado para `C:\TesteSkills\ListaCompras`. O repositório é `github.com/kivian
 
 | # | Teste | Passa se |
 |---|---|---|
-| 5.1 | Fluxo | a skill fez levantamento, plano e perguntas uma por vez antes de escrever código |
+| 5.1 | Fluxo | a skill fez levantamento, rede de segurança, plano e perguntas uma por vez antes de escrever código. Atenção: o `unCategoria` **não** é um caso simples; ele cai em dois itens fora do escopo (herança visual de `TForm1` e `TDBNavigator`) e o legado usa `max(id)+1`. Paradas esperadas, no mínimo: assunto, autorização de commit, criar a caracterização, herança visual, TDBNavigator, geração do id, gravação automática ao trocar de linha e confirmação do plano |
 | 5.2 | Camadas | existem `Types`, `Connection.Database`, `Models`, `Controllers` e a View sem `TDB*` (exceto `TDBGrid`) e sem referência ao DataModule |
 | 5.3 | Codificação | `Normalize-Encoding.ps1` roda sem aviso |
 | 5.4 | DFM | `Test-Dfm.ps1` nos `.dfm` alterados: todos `OK` |
 | 5.5 | Compila | `Build-Delphi.ps1` no projeto do aplicativo: 0 erros |
 | 5.6 | Servidor | só se o Horse estiver disponível (Boss): compila o servidor; **não instale sem perguntar** |
-| 5.7 | Endpoints | servidor rodando com o banco de cópia: `& $K\delphi-safe-refactoring\scripts\Test-Endpoints.ps1 -BaseUrl http://localhost:9000 -Recurso categorias -Corpo '{"nome":"Teste skill","ordem":7}' -CorpoInvalido <corpo que viole uma regra real>` (chamado com `&` numa sessão do PS 5.1) com todas as chamadas `OK` |
+| 5.7 | Endpoints | servidor rodando com o banco de cópia: `& $K\delphi-safe-refactoring\scripts\Test-Endpoints.ps1 -BaseUrl http://localhost:9000 -Recurso categorias -Corpo '{"nome":"Teste skill","ordem":7}' -CorpoInvalido <corpo que viole uma regra real>` (chamado com `&` numa sessão do PS 5.1) com todas as chamadas `OK`; e um 500 provocado (excluir categoria com produtos) responde JSON `{"error": ...}`, não HTML |
 | 5.8 | Trava de escopo | em outra cópia, peça a transformação da `unListaCompras` (tem `TDBLookupComboBox`): a skill tem que **parar e perguntar** |
 
 ## Etapa 6: limpeza da execução

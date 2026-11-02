@@ -21,6 +21,11 @@ como teste falhando.
    testes já fixa `FormatSettings`), data/hora controlada, `ORDER BY` em toda consulta
    comparada, nada de rede, impressora ou diálogos modais.
 4. Confirme que o projeto está versionado no Git com tudo commitado. Se não estiver, PARE e avise.
+   Exceção: chamada por outra skill no meio de uma tarefa (ex.: `delphi-safe-refactoring` B1.5), as
+   alterações da própria tarefa são esperadas. O commit dos testes é proposto; faça só com autorização.
+5. **Caracterize no nível que vai sobreviver à mudança planejada.** Se a tela vai ser refeita
+   (transformação em camadas), não dependa de nomes de componentes DB-aware ou do DataModule na tela:
+   compare o estado do banco (`SELECT ... ORDER BY`) e o conteúdo do grid achado pela classe.
 
 ## Processo
 
