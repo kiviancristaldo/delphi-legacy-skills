@@ -60,6 +60,27 @@
     documentada e testada (na ordem inversa o 500 sai em HTML); `Listen` com callback, acentos e `Flush`
     no console; aviso sobre a mensagem interna do banco no 500; nomes do kit × nomes da documentação do Horse.
   - Roteiro do agente de testes: paradas esperadas no `unCategoria` (não é um caso simples) e checagem do 500.
+- `delphi-unicode-migration` revisada com o white paper *Delphi and Unicode* (Marco Cantù) e
+  conferida no compilador do Delphi 13:
+  - Corrigido: `C in [...]` com caractere acima de 255 não "compara o byte baixo" (dá `False`);
+    o problema real é o literal de 128 a 255 no set virar byte da codepage (`['€']`), e
+    `CharInSet` faz a mesma conta. Para esses casos, `C.IsInArray([...])`. `C.IsDigit` aceita
+    dígitos de outros alfabetos: para campo numérico, `CharInSet(C, ['0'..'9'])`.
+  - Corrigido: W1057/W1058 vêm ligados por padrão; o cast explícito só troca por W1059/W1060,
+    desligados. `string := UTF8Encode(S)` dá só W1057 e desfaz a conversão.
+  - Novo: `referencias/strings-e-codepages.md` (AnsiString com codepage, `RawByteString`,
+    `UTF8String`, tabela de warnings medida no Delphi 13, W1062 no lugar do W2455 do documento,
+    surrogates, `Chr` × `#n` e `{$HIGHCHARUNICODE}`, encoding dos fontes, `TCharacter` obsoleto).
+  - Guia: buffers `array of Char` com `SizeOf`, `FillChar` com caractere, `Inc(PChar)`,
+    `UTF8Encode`/`Utf8ToAnsi`, `TStrings.WriteBOM`/`DefaultEncoding`, leitura de UTF-8 sem BOM,
+    `EEncodingError`, `SetTextCodePage`, `UpperCase` × `AnsiUpperCase`, perda com troca por
+    parecido (`Ω` → `O`), desempenho das conversões.
+  - `Find-PadroesMigracao -Tipo Unicode`: novos padrões (buffer `array of Char`,
+    `UTF8Encode`/`Utf8ToAnsi`, `Chr`/`#n` de 128 a 255, `Stream.Write(S[1], ...)`, constante de
+    set de Char, `set of 'a'..'z'`, `external CONSTANTE`, `GetProcAddress`, mais APIs com sufixo A);
+    `set of AnsiChar` não é mais apontado como risco; `GetProcAddressA` (não existe) saiu da lista.
+  - `tools/Testar-Scripts.ps1`: verificações do modo Unicode e `Contagem` sem `-like` (colchetes
+    no nome do padrão eram tratados como curinga).
 
 ## 0.1.0 (novembro de 2026)
 Versão inicial, apresentada no Dia do ACBr 2026.
