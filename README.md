@@ -36,6 +36,7 @@ Organizadas nas etapas da reforma: **Diagnostique → Proteja → Limpe → Orga
 | Modernize: dados e integrações | [`bde-to-firedac`](skills/bde-to-firedac) · [`ado-to-firedac`](skills/ado-to-firedac) · [`dbx-to-firedac`](skills/dbx-to-firedac) | Acesso a dados → FireDAC com o reFind (corrige erros das regras oficiais) |
 | | [`sql-dialect-migration`](skills/sql-dialect-migration) | Firebird → PostgreSQL / SQL Server |
 | | [`acbr-upgrade`](skills/acbr-upgrade) | Atualização do ACBr com conferência, homologação e plano de volta |
+| Modernize: visual | [`delphi-visual-moderno`](skills/delphi-visual-moderno) | Visual de aplicação web para sistemas VCL sem mudar regra nem permissões: menu lateral escuro, login e Sobre, mensagens bonitas, cadastros com barra de topo, abas como botões arredondados e DBNavigator com ícones, temas e cor da marca |
 
 ## A ordem que funciona
 ```

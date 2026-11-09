@@ -1,6 +1,15 @@
 # Histórico de versões
 
 ## Não lançado
+- `delphi-visual-moderno` (nova): visual moderno para sistemas Delphi VCL, com units prontas (`UnTema`,
+  `UnMenuLateral`, `UnLogin`, `UnSobre`, `UnBotaoModerno`, `UnDialogo`, `UnCadastroModerno`),
+  referências e scripts Perl de apoio. Aplicada e aprovada em dois sistemas em produção.
+  - `ModernizarCadastro` transforma as abas do `TPageControl` numa barra de botões arredondados
+    (mesmo `TPageControl`, `OnChanging`/`OnChange` preservados) e dá ao `TDBNavigator` botões planos
+    com ícones da Segoe Fluent (mesmo componente: cliques, hints e eventos continuam).
+  - Corrigido: ícones do menu lateral apareciam como quadradinhos (a fonte de ícones ficava vazia).
+  - Armadilhas registradas: fechador de diálogos de testes golden master, `showmessage` em
+    minúsculas, navigator que ignora `Glyph` nas VCL recentes.
 - `delphi-cleanup`: processo novo, sem sair fazendo: levantamento → recomendação de testes de
   caracterização (registra se o usuário aceitou) → lista priorizada (alta, média, baixa, com risco
   de corrigir, benefício e recomendação) → decisão do usuário, uma pergunta por vez → execução só do
